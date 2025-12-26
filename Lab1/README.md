@@ -1,14 +1,14 @@
-# Лабораторная работа №1: Нейронная сеть Хопфилда
+# Lab 1: Hopfield Neural Network
 
-## Цель работы
+## Objective
 
-Изучение топологии и алгоритма функционирования нейронной сети Хопфилда. Реализация программы для распознавания зашумленных образов русских букв.
+Understand the topology and dynamics of a Hopfield neural network. Implement a program that recognizes noisy patterns of Russian letters.
 
-## Теоретические сведения
+## Theory
 
-Сеть Хопфилда — это однослойная, симметричная, нелинейная, автоассоциативная нейронная сеть, которая запоминает бинарные или биполярные образы.
+A Hopfield network is a single-layer, symmetric, nonlinear auto-associative memory that stores binary or bipolar patterns.
 
-### Архитектура сети
+### Network architecture
 
 ```
     ┌─────────────────────────────────────────────┐
@@ -19,139 +19,139 @@
     │     ▲             ▲             ▲          │
     │     │             │             │          │
     │     └─────────────┴─────────────┘          │
-    │             Полносвязная сеть              │
-    │          (все связаны со всеми)            │
+    │           Fully connected network          │
+    │          (every neuron connected)          │
     │                                             │
-    │              100 нейронов                  │
-    │            (образы 10×10)                  │
+    │               100 neurons                  │
+    │             (10×10 patterns)               │
     └─────────────────────────────────────────────┘
 ```
 
-### Основные формулы
+### Key formulas
 
-**Обучение (правило Хебба):**
+**Training (Hebbian rule):**
 ```
 w_ij = Σ(k=1 to m) a_i^k × a_j^k,  i ≠ j
 w_ii = 0
 ```
 
-**Воспроизведение:**
+**Recall:**
 ```
 a_i(t+1) = sign(Σ(j=1 to n) w_ij × a_j(t))
 ```
 
-## Вариант задания
+## Assignment variant
 
-**Вариант 5:** Буквы **Д**, **Н**, **Х** (размер 10×10)
+**Variant 5:** Letters **D**, **N**, **X** (size 10×10)
 
-## Требования
+## Requirements
 
-- Компилятор C++ с поддержкой C++17 (g++ 8+, clang++ 7+)
-- Стандартная библиотека C++ (filesystem)
+- C++ compiler with C++17 support (g++ 8+, clang++ 7+)
+- Standard C++ library (filesystem)
 
-## Сборка и запуск
+## Build & Run
 
-### 1. Компиляция
+### 1. Compile
 
 ```bash
 cd Lab1
 g++ -std=c++17 solution.cpp -o solution
 ```
 
-### 2. Запуск с выводом в консоль
+### 2. Run with console output
 
 ```bash
 ./solution
 ```
 
-### 3. Запуск с сохранением вывода в файл
+### 3. Redirect output to files
 
 ```bash
-# Сохранить вывод в файл (без отображения в консоли)
+# Save output only to a file
 ./solution > output.txt
 
-# Сохранить вывод в файл И отобразить в консоли
+# Save output and show it in the console
 ./solution | tee output.txt
 
-# Сохранить вывод вместе с ошибками
+# Save stdout and stderr
 ./solution > output.txt 2>&1
 ```
 
-### 4. Компиляция отчёта LaTeX
+### 4. Compile the LaTeX report
 
 ```bash
 xelatex report.tex
 ```
 
-Требуется XeLaTeX и шрифты DejaVu.
+XeLaTeX and DejaVu fonts are required.
 
-## Структура файлов
+## File layout
 
 ```
 Lab1/
-├── README.md           # Этот файл
-├── description.md      # Подробное описание задания
-├── solution.cpp        # Исходный код решения
-├── solution            # Скомпилированная программа
-├── report.tex          # Отчет в формате LaTeX
-├── report.pdf          # Скомпилированный отчет
-├── output.txt          # Вывод программы (после запуска)
-├── patterns/           # Эталонные образы
-│   ├── D.txt           # Буква Д
-│   ├── N.txt           # Буква Н
-│   └── X.txt           # Буква Х
-└── tests/              # Тестовые образы с шумом
-    ├── results.csv     # Результаты тестирования (CSV)
+├── README.md           # This file
+├── description.md      # Assignment description
+├── solution.cpp        # Source code
+├── solution            # Compiled binary
+├── report.tex          # LaTeX report
+├── report.pdf          # Compiled report
+├── output.txt          # Program logs (created when redirected)
+├── patterns/           # Reference patterns
+│   ├── D.txt           # Letter D
+│   ├── N.txt           # Letter N
+│   └── X.txt           # Letter X
+└── tests/              # Noisy patterns generated for evaluation
+    ├── results.csv     # Test summary (CSV)
     ├── D/
-    │   ├── noise_10/   # 10% шума
-    │   ├── noise_20/   # 20% шума
+    │   ├── noise_10/   # 10% noise
+    │   ├── noise_20/   # 20% noise
     │   └── ...
     ├── N/
     └── X/
 ```
 
-## Выходные файлы
+## Output files
 
-После запуска программы создаются:
+After running the program, the following files are generated:
 
-| Файл | Описание |
-|------|----------|
-| `tests/results.csv` | Результаты тестирования в формате CSV |
-| `tests/*/noise_*/test_*.txt` | Сгенерированные зашумлённые образы |
-| `output.txt` | Полный вывод программы (при использовании `> output.txt`) |
+| File | Description |
+|------|-------------|
+| `tests/results.csv` | Evaluation results in CSV format |
+| `tests/*/noise_*/test_*.txt` | Generated noisy samples |
+| `output.txt` | Full console log (when `> output.txt` is used) |
 
-## Пример вывода программы
+## Sample output
 
 ```
 ========================================================
-    ЛАБОРАТОРНАЯ РАБОТА №1: НЕЙРОННАЯ СЕТЬ ХОПФИЛДА
-    Вариант 5: буквы Д, Н, Х
+    LAB 1: HOPFIELD NEURAL NETWORK
+    Variant 5: letters D, N, X
 ========================================================
 
-1. Загрузка эталонных образов из patterns/...
+1. Loading reference patterns from patterns/...
 
-Эталонные образы (10x10):
+Reference patterns (10x10):
 ------------------------
-Буква Д:
+Letter D:
       ############    
       ##        ##    
       ##        ##    
       ...
 
-2. Обучение сети по правилу Хебба...
-   Матрица весов вычислена (100x100)
+2. Training with the Hebbian rule...
+   Weight matrix computed (100x100)
 
-3. Генерация тестовых образов с разным уровнем шума...
-   Тестовые образы сохранены в папку tests/
+3. Generating test patterns with different noise levels...
+   Test patterns saved to tests/
 
-4. Демонстрация распознавания (30% шума):
-   Распознано как: Д
-   Сходство с эталоном: 100.0%
+4. Recognition demo (30% noise):
+   Recognized as: D
+   Similarity to reference: 100.0%
 
-5. Сводная статистика по уровням шума:
+5. Summary statistics by noise level:
 ┌───────┬─────────────────┬─────────────────┐
-│  Шум  │   Синхронный    │  Асинхронный    │
-│   %   │   % успеха      │   % успеха      │
+│ Noise │ Synchronous     │ Asynchronous    │
+│   %   │ success rate %  │ success rate %  │
 ├───────┼─────────────────┼─────────────────┤
 │   10  │      100.0%     │      100.0%     │
 │   20  │      100.0%     │      100.0%     │
@@ -162,18 +162,18 @@ Lab1/
 └───────┴─────────────────┴─────────────────┘
 ```
 
-## Результаты
+## Results
 
-| Уровень шума | Синхронный режим | Асинхронный режим |
-|--------------|------------------|-------------------|
-| 10-35%       | 100%             | 100%              |
-| 40%          | ~70%             | ~70%              |
-| 50%          | ~17%             | ~27%              |
-| 60%+         | ~0%              | ~0%               |
+| Noise level | Synchronous mode | Asynchronous mode |
+|-------------|------------------|-------------------|
+| 10-35%      | 100%             | 100%              |
+| 40%         | ~70%             | ~70%              |
+| 50%         | ~17%             | ~27%              |
+| 60%+        | ~0%              | ~0%               |
 
-## Выводы
+## Conclusions
 
-1. Сеть Хопфилда успешно распознает образы при шуме до 35%
-2. При шуме 40-50% качество распознавания значительно падает
-3. Асинхронный режим немного лучше при высоком шуме, но требует больше итераций
-4. Рекомендуется использовать сеть при шуме до 30-35%
+1. The Hopfield network recognizes patterns reliably up to ~35% noise
+2. Accuracy drops sharply beyond 40-50% noise
+3. Asynchronous updates perform slightly better at high noise but require more iterations
+4. Recommended to operate within 30-35% noise levels

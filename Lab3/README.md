@@ -1,114 +1,113 @@
-# Лабораторная работа №3: Сеть РБФ (Радиальная Базисная Функция)
+# Lab 3: Radial Basis Function Network
 
-## Цель работы
+## Objective
 
-Изучение топологии и алгоритма функционирования сети РБФ. Реализация программы для распознавания зашумленных образов.
+Explore the architecture and training of an RBF network. Implement a program that recognizes noisy patterns.
 
-## Теоретические сведения
+## Theory
 
-Сеть РБФ — аналог многослойного персептрона с более быстрым обучением. Скрытый слой использует гауссовы функции активации.
+An RBF network is similar to an MLP but trains faster. The hidden layer uses Gaussian activation functions.
 
-### Архитектура сети
+### Network architecture
 
 ```
-    Входной слой        РБФ слой            Выходной слой
-    (36 входов)         (5 ячеек)           (5 нейронов)
-    
+    Input layer         RBF layer             Output layer
+    (36 inputs)         (5 cells)            (5 neurons)
     ┌───┐               ┌───────┐           ┌───┐
-    │x₁ │──────────────►│ RBF₁  │──────────►│y₁ │ → Класс N
+    │x₁ │──────────────►│ RBF₁  │──────────►│y₁ │ → Class N
     └───┘               │exp(-d²)│           └───┘
     ┌───┐               └───────┘           ┌───┐
-    │x₂ │──────────────►│ RBF₂  │──────────►│y₂ │ → Класс F
+    │x₂ │──────────────►│ RBF₂  │──────────►│y₂ │ → Class F
     └───┘               │exp(-d²)│           └───┘
       ⋮                    ⋮                   ⋮
     ┌───┐               ┌───────┐           ┌───┐
-    │x₃₆│──────────────►│ RBF₅  │──────────►│y₅ │ → Класс D
+    │x₃₆│──────────────►│ RBF₅  │──────────►│y₅ │ → Class D
     └───┘               │exp(-d²)│           └───┘
 ```
 
-### Основные формулы
+### Key formulas
 
-**Гауссов колокол (выход РБФ ячейки):**
+**Gaussian activation (RBF output):**
 ```
 g_j = exp(-||x - t_j||² / σ_j²)
 ```
 
-**Выходной слой:**
+**Output layer:**
 ```
 y_k = Σ w_jk × g_j
 ```
 
-**Обучение выходного слоя:**
+**Output weight update:**
 ```
 w_jk := w_jk + α × (y_k^target - y_k) × g_j
 ```
 
-## Вариант задания
+## Assignment variant
 
-**Вариант 2:** Классы **N**, **F**, **I**, **P**, **D** (размер 6×6)
+**Variant 2:** Classes **N**, **F**, **I**, **P**, **D** (size 6×6)
 
-## Требования
+## Requirements
 
-- Компилятор C++ с поддержкой C++17 (g++ 8+, clang++ 7+)
-- Стандартная библиотека C++ (filesystem)
+- C++ compiler with C++17 support (g++ 8+, clang++ 7+)
+- Standard C++ library (filesystem)
 
-## Сборка и запуск
+## Build & Run
 
-### 1. Компиляция
+### 1. Compile
 
 ```bash
 cd Lab3
 g++ -std=c++17 solution.cpp -o solution
 ```
 
-### 2. Запуск с выводом в консоль
+### 2. Run with console output
 
 ```bash
 ./solution
 ```
 
-### 3. Запуск с сохранением вывода в файл
+### 3. Redirect output to files
 
 ```bash
-# Сохранить вывод в файл (без отображения в консоли)
+# Save output only to a file
 ./solution > output.txt
 
-# Сохранить вывод в файл И отобразить в консоли
+# Save output and show it in the console
 ./solution | tee output.txt
 
-# Сохранить вывод вместе с ошибками
+# Save stdout and stderr
 ./solution > output.txt 2>&1
 ```
 
-### 4. Компиляция отчёта LaTeX
+### 4. Compile the LaTeX report
 
 ```bash
 xelatex report.tex
 ```
 
-Требуется XeLaTeX и шрифты DejaVu.
+XeLaTeX and DejaVu fonts are required.
 
-## Структура файлов
+## File layout
 
 ```
 Lab3/
-├── README.md           # Этот файл
-├── description.md      # Подробное описание задания
-├── solution.cpp        # Исходный код решения
-├── solution            # Скомпилированная программа
-├── report.tex          # Отчет в формате LaTeX
-├── report.pdf          # Скомпилированный отчет
-├── output.txt          # Вывод программы (после запуска)
-├── patterns/           # Эталонные образы
-│   ├── N.txt           # Буква N
-│   ├── F.txt           # Буква F
-│   ├── I.txt           # Буква I
-│   ├── P.txt           # Буква P
-│   └── D.txt           # Буква D
-└── tests/              # Тестовые образы с шумом
+├── README.md           # This file
+├── description.md      # Assignment description
+├── solution.cpp        # Source code
+├── solution            # Compiled binary
+├── report.tex          # LaTeX report
+├── report.pdf          # Compiled report
+├── output.txt          # Console log (if redirected)
+├── patterns/           # Reference patterns
+│   ├── N.txt           # Letter N
+│   ├── F.txt           # Letter F
+│   ├── I.txt           # Letter I
+│   ├── P.txt           # Letter P
+│   └── D.txt           # Letter D
+└── tests/
     ├── N/
-    │   ├── noise_10/   # 10% шума
-    │   ├── noise_20/   # 20% шума
+    │   ├── noise_10/   # 10% noise
+    │   ├── noise_20/   # 20% noise
     │   └── ...
     ├── F/
     ├── I/
@@ -116,75 +115,75 @@ Lab3/
     └── D/
 ```
 
-## Выходные файлы
+## Output files
 
-После запуска программы создаются:
+After running the program, the following files are created:
 
-| Файл | Описание |
-|------|----------|
-| `tests/*/noise_*/test_*.txt` | Сгенерированные зашумлённые образы |
-| `output.txt` | Полный вывод программы (при использовании `> output.txt`) |
+| File | Description |
+|------|-------------|
+| `tests/*/noise_*/test_*.txt` | Generated noisy samples |
+| `output.txt` | Full console log (when `> output.txt` is used) |
 
-## Пример вывода программы
+## Sample output
 
 ```
 ========================================================
-    ЛАБОРАТОРНАЯ РАБОТА №3: СЕТЬ РБФ
-    Вариант 2: классы N, F, I, P, D
+    LAB 3: RADIAL BASIS FUNCTION NETWORK
+    Variant 2: classes N, F, I, P, D
 ========================================================
 
-1. Загрузка эталонных образов из patterns/...
+1. Loading reference patterns from patterns/...
 
-Идеальные образы для обучения (6x6):
+Ideal training patterns (6x6):
 -----------------------------------
-Класс 1 (N):
+Class 1 (N):
   ■ □ □ □ □ ■
   ■ ■ □ □ □ ■
   ...
 
-2. Инициализация РБФ ячеек...
-   Количество РБФ ячеек: 5
-   Класс 1 (N): sigma = 2.449
-   Класс 2 (F): sigma = 2.449
+2. Initializing RBF cells...
+   Total cells: 5
+   Class 1 (N): sigma = 2.449
+   Class 2 (F): sigma = 2.449
    ...
 
-3. Обучение выходного слоя градиентным спуском...
-   Обучение завершено за 87 шагов
+3. Training the output layer via gradient descent...
+   Training completed in 87 steps
 
 ┌─────────────────────────────────────────────────┐
-│ Распознаваемый образ (6×6):                     │
+│ Recognized pattern (6×6):                     │
 │   ■ □ □ □ □ ■                                   │
 │   ■ ■ □ □ □ ■                                   │
 ├─────────────────────────────────────────────────┤
-│ Процент подобия (выход РБФ):                    │
-│   Класс 1 (N): 85.2%  ◄── Распознан как "N"     │
-│   Класс 2 (F): 3.1%                             │
-│   Класс 3 (I): 5.4%                             │
-│   Класс 4 (P): 4.8%                             │
-│   Класс 5 (D): 1.5%                             │
+│ Similarity scores (RBF outputs):               │
+│   Class 1 (N): 85.2%  ◄── Recognized as "N"     │
+│   Class 2 (F): 3.1%                             │
+│   Class 3 (I): 5.4%                             │
+│   Class 4 (P): 4.8%                             │
+│   Class 5 (D): 1.5%                             │
 └─────────────────────────────────────────────────┘
 ```
 
-## Параметры сети
+## Network parameters
 
-| Параметр | Значение |
-|----------|----------|
-| Входные нейроны | 36 (6×6) |
-| РБФ ячеек | 5 (по одной на класс) |
-| Выходные нейроны | 5 |
-| Скорость обучения α | 0.1 |
-| σ (sigma) | Авто (половина расстояния до ближайшего центра) |
+| Parameter | Value |
+|----------|-------|
+| Input neurons | 36 (6×6) |
+| RBF cells | 5 (one per class) |
+| Output neurons | 5 |
+| Learning rate α | 0.1 |
+| σ (sigma) | Automatic (half the distance to the nearest center) |
 
-## Сравнение с MLP
+## Comparison with MLP
 
-| Характеристика | MLP | RBF |
+| Characteristic | MLP | RBF |
 |----------------|-----|-----|
-| Скорость обучения | Медленная | Быстрая |
-| Обучаемые слои | 2 | 1 (только выходной) |
-| Точность | Высокая | Ограниченная |
+| Training speed | Slow | Fast |
+| Trainable layers | 2 | 1 (output only) |
+| Accuracy | High | Limited |
 
-## Выводы
+## Conclusions
 
-1. Сеть РБФ обучается значительно быстрее MLP (менее 100 шагов)
-2. Качество распознавания сопоставимо с MLP при низком шуме
-3. Подходит для задач с хорошо кластеризуемыми классами
+1. RBF trains much faster than the MLP (under 100 steps)
+2. Recognition quality is comparable to the MLP at low noise levels
+3. Suitable for datasets with well-clustered classes

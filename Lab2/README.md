@@ -1,138 +1,137 @@
-# Лабораторная работа №2: Многослойный персептрон
+# Lab 2: Multilayer Perceptron
 
-## Цель работы
+## Objective
 
-Изучение топологии и алгоритма функционирования многослойного персептрона. Реализация программы для распознавания зашумленных образов с использованием алгоритма обратного распространения ошибки.
+Study the structure and learning algorithm of a multilayer perceptron. Implement a program that recognizes noisy patterns using backpropagation.
 
-## Теоретические сведения
+## Theory
 
-Многослойный персептрон — это нейронная сеть с прямым распространением сигнала, обучаемая с учителем. Способна аппроксимировать любую непрерывную функцию.
+A multilayer perceptron is a feedforward network trained with supervised learning. It can approximate any continuous function given sufficient capacity.
 
-### Архитектура сети
+### Network architecture
 
 ```
-    Входной слой        Скрытый слой        Выходной слой
-    (36 нейронов)       (20 нейронов)       (5 нейронов)
-    
+    Input layer         Hidden layer         Output layer
+    (36 neurons)        (20 neurons)        (5 neurons)
     ┌───┐               ┌───┐               ┌───┐
-    │x₁ │──────────────►│h₁ │──────────────►│y₁ │ → Класс N
+    │x₁ │──────────────►│h₁ │──────────────►│y₁ │ → Class N
     └───┘               └───┘               └───┘
     ┌───┐               ┌───┐               ┌───┐
-    │x₂ │──────────────►│h₂ │──────────────►│y₂ │ → Класс F
+    │x₂ │──────────────►│h₂ │──────────────►│y₂ │ → Class F
     └───┘               └───┘               └───┘
       ⋮                   ⋮                   ⋮
     ┌───┐               ┌───┐               ┌───┐
-    │x₃₆│──────────────►│h₂₀│──────────────►│y₅ │ → Класс D
+    │x₃₆│──────────────►│h₂₀│──────────────►│y₅ │ → Class D
     └───┘               └───┘               └───┘
 ```
 
-### Основные формулы
+### Key formulas
 
-**Сигмоидная функция:**
+**Sigmoid activation:**
 ```
 f(x) = 1 / (1 + e^(-x))
 ```
 
-**Обратное распространение ошибки:**
+**Backpropagation update:**
 ```
 δ_k = (y_k^target - y_k) × f'(S_k)
 w_jk := w_jk + α × δ_k × h_j
 ```
 
-## Вариант задания
+## Assignment variant
 
-**Вариант 2:** Буквы **N**, **F**, **I**, **P**, **D** (размер 6×6)
+**Variant 2:** Letters **N**, **F**, **I**, **P**, **D** (size 6×6)
 
-## Требования
+## Requirements
 
-- Компилятор C++ с поддержкой C++17 (g++ 8+, clang++ 7+)
-- Стандартная библиотека C++ (filesystem)
+- C++ compiler with C++17 support (g++ 8+, clang++ 7+)
+- Standard C++ library (filesystem)
 
-## Сборка и запуск
+## Build & Run
 
-### 1. Компиляция
+### 1. Compile
 
 ```bash
 cd Lab2
 g++ -std=c++17 solution.cpp -o solution
 ```
 
-### 2. Запуск с выводом в консоль
+### 2. Run with console output
 
 ```bash
 ./solution
 ```
 
-### 3. Запуск с сохранением вывода в файл
+### 3. Redirect output to files
 
 ```bash
-# Сохранить вывод в файл (без отображения в консоли)
+# Save output only to a file
 ./solution > output.txt
 
-# Сохранить вывод в файл И отобразить в консоли
+# Save output and show it in the console
 ./solution | tee output.txt
 
-# Сохранить вывод вместе с ошибками
+# Save stdout and stderr
 ./solution > output.txt 2>&1
 ```
 
-### 4. Компиляция отчёта LaTeX
+### 4. Compile the LaTeX report
 
 ```bash
 xelatex report.tex
 ```
 
-Требуется XeLaTeX и шрифты DejaVu.
+XeLaTeX and DejaVu fonts are required.
 
-## Структура файлов
+## File layout
 
 ```
 Lab2/
-├── README.md           # Этот файл
-├── description.md      # Подробное описание задания
-├── solution.cpp        # Исходный код решения
-├── solution            # Скомпилированная программа
-├── report.tex          # Отчет в формате LaTeX
-├── report.pdf          # Скомпилированный отчет
-├── output.txt          # Вывод программы (после запуска)
-└── patterns/           # Эталонные образы
-    ├── N.txt           # Буква N
-    ├── F.txt           # Буква F
-    ├── I.txt           # Буква I
-    ├── P.txt           # Буква P
-    └── D.txt           # Буква D
+├── README.md           # This file
+├── description.md      # Assignment description
+├── solution.cpp        # Source code
+├── solution            # Compiled binary
+├── report.tex          # LaTeX report
+├── report.pdf          # Compiled report
+├── output.txt          # Console log (if redirected)
+└── patterns/           # Reference patterns
+    ├── N.txt           # Letter N
+    ├── F.txt           # Letter F
+    ├── I.txt           # Letter I
+    ├── P.txt           # Letter P
+    └── D.txt           # Letter D
 ```
 
-## Выходные файлы
+## Output files
 
-После запуска программы создаются:
+After running the program, the following file is created:
 
-| Файл | Описание |
-|------|----------|
-| `output.txt` | Полный вывод программы (при использовании `> output.txt`) |
+| File | Description |
+|------|-------------|
+| `output.txt` | Full console log (when `> output.txt` is used) |
 
-## Пример вывода программы
+## Sample output
 
 ```
 ========================================================
-    ЛАБОРАТОРНАЯ РАБОТА №2: МНОГОСЛОЙНЫЙ ПЕРСЕПТРОН
-    Вариант 2: буквы N, F, I, P, D
+    LAB 2: MULTILAYER PERCEPTRON
+    Variant 2: letters N, F, I, P, D
 ========================================================
 
-1. Загрузка эталонных образов из patterns/...
-   Загружено 5 паттернов
+1. Loading reference patterns from patterns/...
+   5 patterns loaded
 
-2. Создание обучающей выборки...
-   Создано 5 обучающих примеров
+2. Building the training set...
+   5 training examples created
 
-3. Обучение многослойного персептрона...
-   Обучение завершено за 1542 эпох
+3. Training the network...
+   Training completed in 1542 epochs
 
-4. Тестирование на идеальных образах:
+4. Testing on clean patterns:
 ======================================
 
 ┌─────────────────────────────────┐
-│ Распознаваемый образ (6×6):    │
+│ Recognized pattern (6×6):       │
 │   ■ □ □ □ □ ■                  │
 │   ■ □ □ □ □ ■                  │
 │   ■ ■ □ □ □ ■                  │
@@ -140,29 +139,29 @@ Lab2/
 │   ■ □ □ ■ □ ■                  │
 │   ■ □ □ □ ■ ■                  │
 ├─────────────────────────────────┤
-│ Процент подобия:               │
-│   Класс 1 (N): 99.2%  ◄── Распознан
-│   Класс 2 (F): 0.1%            │
-│   Класс 3 (I): 0.3%            │
-│   Класс 4 (P): 0.2%            │
-│   Класс 5 (D): 0.2%            │
+│ Similarity scores:             │
+│   Class 1 (N): 99.2%  ◄── Detected
+│   Class 2 (F): 0.1%            │
+│   Class 3 (I): 0.3%            │
+│   Class 4 (P): 0.2%            │
+│   Class 5 (D): 0.2%            │
 └─────────────────────────────────┘
 ```
 
-## Параметры сети
+## Network parameters
 
-| Параметр | Значение |
-|----------|----------|
-| Входные нейроны | 36 (6×6) |
-| Скрытые нейроны | 20 |
-| Выходные нейроны | 5 |
-| Скорость обучения α | 0.5 |
-| Скорость обучения β | 0.5 |
-| Макс. ошибка | 0.01 |
+| Parameter | Value |
+|----------|-------|
+| Input neurons | 36 (6×6) |
+| Hidden neurons | 20 |
+| Output neurons | 5 |
+| Learning rate α | 0.5 |
+| Learning rate β | 0.5 |
+| Max error | 0.01 |
 
-## Выводы
+## Conclusions
 
-1. Многослойный персептрон успешно обучен на 5 классах образов
-2. Сеть способна распознавать зашумленные образы при шуме до 30-40%
-3. Процент подобия показывает уверенность сети в каждом классе
-4. Обучение занимает 500-3000 эпох в зависимости от начальной инициализации
+1. The MLP successfully learns five pattern classes
+2. It recognizes noisy inputs up to ~30-40% noise
+3. The similarity score demonstrates the confidence for each class
+4. Training takes 500-3000 epochs depending on initialization

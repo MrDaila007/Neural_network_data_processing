@@ -1,121 +1,119 @@
-# Лабораторная работа №4: Конкурентная нейронная сеть
+# Lab 4: Competitive Neural Network
 
-## Цель работы
+## Objective
 
-Изучение топологии и алгоритма функционирования конкурентной нейронной сети. Реализация программы для кластеризации и распознавания образов математических символов.
+Learn the topology and learning procedure of a competitive neural network. Implement a program that clusters and recognizes mathematical symbols.
 
-## Теоретические сведения
+## Theory
 
-Конкурентная сеть — простейшая самоорганизующаяся сеть, обучающаяся **без учителя**. Способна к кластеризации входных данных.
+A competitive network is a simple self-organizing system trained without supervision. It naturally clusters the input space.
 
-### Архитектура сети
+### Network architecture
 
 ```
-    Входной слой        Конкурентный слой
-    (36 нейронов)       (5 нейронов)
-    
+    Input layer         Competitive layer
+    (36 neurons)        (5 neurons)
     ┌───┐               ┌───┐
-    │x₁ │──────────────►│ 1 │ → Кластер 1 (≤)
+    │x₁ │──────────────►│ 1 │ → Cluster 1 (≤)
     └───┘               └───┘
     ┌───┐               ┌───┐
-    │x₂ │──────────────►│ 2 │ → Кластер 2 (≥)
+    │x₂ │──────────────►│ 2 │ → Cluster 2 (≥)
     └───┘               └───┘
       ⋮                   ⋮
     ┌───┐               ┌───┐
-    │x₃₆│──────────────►│ 5 │ → Кластер 5 (≅)
+    │x₃₆│──────────────►│ 5 │ → Cluster 5 (≅)
     └───┘               └───┘
-    
-         Победитель: максимум скалярного произведения
+         Winner: maximum dot product
 ```
 
-### Основные формулы
+### Key formulas
 
-**Выход нейрона:**
+**Neuron output:**
 ```
 y_j = Σ w_ij × x_i = ||w_j|| × ||x|| × cos(α)
 ```
 
-**Обновление весов победителя:**
+**Winner weight update:**
 ```
 w_ij := w_ij + β × (x_i - w_ij)
 ```
 
-**Нормировка:**
+**Normalization:**
 ```
 w_ij := w_ij / ||w_j||
 ```
 
-**Частотно-зависимый критерий:**
+**Frequency-dependent criterion:**
 ```
-победитель = argmin_j (||x - w_j|| × (1 + f_j))
+winner = argmin_j (||x - w_j|| × (1 + f_j))
 ```
 
-## Вариант задания
+## Assignment variant
 
-**Вариант 5:** Символы **≤**, **≥**, **≠**, **≈**, **≅** (размер 6×6)
+**Variant 5:** Symbols **≤**, **≥**, **≠**, **≈**, **≅** (size 6×6)
 
-## Требования
+## Requirements
 
-- Компилятор C++ с поддержкой C++17 (g++ 8+, clang++ 7+)
-- Стандартная библиотека C++ (filesystem)
+- C++ compiler with C++17 support (g++ 8+, clang++ 7+)
+- Standard C++ library (filesystem)
 
-## Сборка и запуск
+## Build & Run
 
-### 1. Компиляция
+### 1. Compile
 
 ```bash
 cd Lab4
 g++ -std=c++17 solution.cpp -o solution
 ```
 
-### 2. Запуск с выводом в консоль
+### 2. Run with console output
 
 ```bash
 ./solution
 ```
 
-### 3. Запуск с сохранением вывода в файл
+### 3. Redirect output to files
 
 ```bash
-# Сохранить вывод в файл (без отображения в консоли)
+# Save output only to a file
 ./solution > output.txt
 
-# Сохранить вывод в файл И отобразить в консоли
+# Save output and show it in the console
 ./solution | tee output.txt
 
-# Сохранить вывод вместе с ошибками
+# Save stdout and stderr
 ./solution > output.txt 2>&1
 ```
 
-### 4. Компиляция отчёта LaTeX
+### 4. Compile the LaTeX report
 
 ```bash
 xelatex report.tex
 ```
 
-Требуется XeLaTeX и шрифты DejaVu.
+XeLaTeX and DejaVu fonts are required.
 
-## Структура файлов
+## File layout
 
 ```
 Lab4/
-├── README.md           # Этот файл
-├── description.md      # Подробное описание задания
-├── solution.cpp        # Исходный код решения
-├── solution            # Скомпилированная программа
-├── report.tex          # Отчет в формате LaTeX
-├── report.pdf          # Скомпилированный отчет
-├── output.txt          # Вывод программы (после запуска)
-├── patterns/           # Эталонные образы
-│   ├── LE.txt          # Символ ≤
-│   ├── GE.txt          # Символ ≥
-│   ├── NE.txt          # Символ ≠
-│   ├── AP.txt          # Символ ≈
-│   └── CO.txt          # Символ ≅
-└── tests/              # Тестовые образы с шумом
+├── README.md           # This file
+├── description.md      # Assignment description
+├── solution.cpp        # Source code
+├── solution            # Compiled binary
+├── report.tex          # LaTeX report
+├── report.pdf          # Compiled report
+├── output.txt          # Console log (if redirected)
+├── patterns/           # Reference patterns
+│   ├── LE.txt          # Symbol ≤
+│   ├── GE.txt          # Symbol ≥
+│   ├── NE.txt          # Symbol ≠
+│   ├── AP.txt          # Symbol ≈
+│   └── CO.txt          # Symbol ≅
+└── tests/              # Noisy samples per class
     ├── LE/
-    │   ├── noise_10/   # 10% шума
-    │   ├── noise_20/   # 20% шума
+    │   ├── noise_10/   # 10% noise
+    │   ├── noise_20/   # 20% noise
     │   └── ...
     ├── GE/
     ├── NE/
@@ -123,29 +121,29 @@ Lab4/
     └── CO/
 ```
 
-## Выходные файлы
+## Output files
 
-После запуска программы создаются:
+After running the program, the following files are created:
 
-| Файл | Описание |
-|------|----------|
-| `tests/*/noise_*/test_*.txt` | Сгенерированные зашумлённые образы |
-| `output.txt` | Полный вывод программы (при использовании `> output.txt`) |
+| File | Description |
+|------|-------------|
+| `tests/*/noise_*/test_*.txt` | Generated noisy samples |
+| `output.txt` | Full console log (when `> output.txt` is used) |
 
-## Пример вывода программы
+## Sample output
 
 ```
 ========================================================
-    ЛАБОРАТОРНАЯ РАБОТА №4: КОНКУРЕНТНАЯ СЕТЬ
-    Вариант 5: символы ≤, ≥, ≠, ≈, ≅
+    LAB 4: COMPETITIVE NEURAL NETWORK
+    Variant 5: symbols ≤, ≥, ≠, ≈, ≅
 ========================================================
 
-1. Загрузка эталонных образов из patterns/...
-   Загружено 15 обучающих образов
+1. Loading reference patterns from patterns/...
+   15 training samples loaded
 
-Эталонные образы (6x6):
+Reference patterns (6x6):
 ------------------------
-Класс ≤ (LE):
+Class ≤ (LE):
   □ □ □ □ ■ ■ 
   □ □ □ ■ ■ □ 
   □ □ ■ ■ □ □ 
@@ -153,62 +151,62 @@ Lab4/
   □ □ □ ■ ■ □ 
   ■ ■ ■ ■ ■ ■ 
 
-3. Обучение сети...
-  Обучение завершено на итерации 23 (макс. расстояние: 0.0089)
+3. Training the network...
+  Training converged at iteration 23 (max distance: 0.0089)
 
-4. Определение соответствия нейронов классам:
+4. Assigning neurons to classes:
 ----------------------------------------------
-Класс ≤ → Нейрон-победитель: #0
-Класс ≥ → Нейрон-победитель: #1
-Класс ≠ → Нейрон-победитель: #2
-Класс ≈ → Нейрон-победитель: #3
-Класс ≅ → Нейрон-победитель: #4
+Class ≤ → Winner neuron: #0
+Class ≥ → Winner neuron: #1
+Class ≠ → Winner neuron: #2
+Class ≈ → Winner neuron: #3
+Class ≅ → Winner neuron: #4
 
-8. Тестирование на зашумленных образах:
+8. Testing noisy samples:
 =======================================
 ┌────────┬───────┬──────────────┬──────────────┐
-│ Класс  │  Шум  │  Правильно   │  Неправильно  │
+│ Class  │ Noise │ Correct      │ Incorrect    │
 ├────────┼───────┼──────────────┼──────────────┤
 │   ≤    │   10  │     10/10    │       0/10    │
 │   ≤    │   20  │      9/10    │       1/10    │
 │   ≤    │   30  │      8/10    │       2/10    │
 │   ≤    │   40  │      7/10    │       3/10    │
 │   ≤    │   50  │      5/10    │       5/10    │
-...
+... (remaining rows omitted)
 └────────┴───────┴──────────────┴──────────────┘
 ```
 
-## Параметры сети
+## Network parameters
 
-| Параметр | Значение |
-|----------|----------|
-| Входные нейроны | 36 (6×6) |
-| Конкурентные нейроны | 5 |
-| Скорость обучения β | 0.1 |
-| Макс. расстояние | 0.01 |
-| Обучающих образов | 15 (по 3 на класс) |
+| Parameter | Value |
+|----------|-------|
+| Input neurons | 36 (6×6) |
+| Competitive neurons | 5 |
+| Learning rate β | 0.1 |
+| Max distance | 0.01 |
+| Training samples | 15 (three per class) |
 
-## Результаты тестирования
+## Test results
 
-| Уровень шума | Точность распознавания |
-|--------------|------------------------|
-| 10%          | 100%                   |
-| 20%          | 90%                    |
-| 30%          | 80%                    |
-| 40%          | 64%                    |
-| 50%          | 52%                    |
+| Noise level | Recognition accuracy |
+|-------------|----------------------|
+| 10%         | 100%                 |
+| 20%         | 90%                  |
+| 30%         | 80%                  |
+| 40%         | 64%                  |
+| 50%         | 52%                  |
 
-## Сравнение с другими сетями
+## Comparison with other networks
 
-| Характеристика | MLP | RBF | Конкурентная |
-|----------------|-----|-----|--------------|
-| Тип обучения | С учителем | С учителем | Без учителя |
-| Скорость обучения | Медленная | Быстрая | Быстрая |
-| Назначение | Классификация | Классификация | Кластеризация |
+| Characteristic | MLP | RBF | Competitive |
+|----------------|-----|-----|-------------|
+| Learning mode | Supervised | Supervised | Unsupervised |
+| Training speed | Slow | Fast | Fast |
+| Intended use | Classification | Classification | Clustering |
 
-## Выводы
+## Conclusions
 
-1. Конкурентная сеть успешно кластеризует образы без учителя
-2. Частотно-зависимое обучение предотвращает проблему "мертвых нейронов"
-3. При шуме до 20% — 90% успешное распознавание
-4. Подходит для задач кластеризации без предварительной разметки
+1. The competitive network clusters symbols without supervision
+2. Frequency-dependent learning prevents dead neurons
+3. Accuracy remains ≥90% up to 20% noise
+4. Suitable for clustering tasks without labeled data

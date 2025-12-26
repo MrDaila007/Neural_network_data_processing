@@ -1,102 +1,103 @@
 # Neural Network Data Processing
 
-Лабораторные работы по курсу **"Нейронные сети обработки данных"**.
+Laboratory assignments for the course **"Neural Networks for Data Processing"**.
 
-## Содержание
+## Contents
 
-| Лабораторная | Тема | Описание |
-|--------------|------|----------|
-| [Lab1](Lab1/) | Нейронная сеть Хопфилда | Автоассоциативная сеть с обратными связями для распознавания образов |
-| [Lab2](Lab2/) | Многослойный персептрон | Сеть с прямым распространением, алгоритм обратного распространения ошибки |
-| [Lab3](Lab3/) | Сеть РБФ | Радиально-базисные функции для классификации |
-| [Lab4](Lab4/) | Конкурентная нейронная сеть | Самоорганизующаяся сеть для кластеризации |
+| Lab | Topic | Description |
+|-----|-------|-------------|
+| [Lab1](Lab1/) | Hopfield Neural Network | Auto-associative network with feedback for pattern recognition |
+| [Lab2](Lab2/) | Multilayer Perceptron | Feedforward network with backpropagation algorithm |
+| [Lab3](Lab3/) | RBF Network | Radial Basis Functions for classification |
+| [Lab4](Lab4/) | Competitive Neural Network | Self-organizing network for clustering |
 
-## Структура проекта
+## Project Structure
 
 ```
 Neural_network_data_processing/
 ├── Doc/
-│   ├── Theory.md              # Общие теоретические сведения об ИНС
-│   ├── PDF JPG/               # Изображения из методички
-│   └── ...
+│   └── Theory.md              # General theory on neural networks
 ├── Lab1/
-│   ├── description.md         # Описание лабораторной работы
-│   ├── solution.cpp           # Решение на C++
-│   └── report.tex             # Шаблон отчета
+│   ├── description.md         # Lab assignment description
+│   ├── solution.cpp           # C++ solution
+│   ├── report.tex             # LaTeX report
+│   └── README.md              # Build and run instructions
 ├── Lab2/
 │   ├── description.md
 │   ├── solution.cpp
-│   └── report.tex
+│   ├── report.tex
+│   └── README.md
 ├── Lab3/
 │   ├── description.md
 │   ├── solution.cpp
-│   └── report.tex
+│   ├── report.tex
+│   └── README.md
 ├── Lab4/
 │   ├── description.md
 │   ├── solution.cpp
-│   └── report.tex
+│   ├── report.tex
+│   └── README.md
 └── README.md
 ```
 
-## Теоретические сведения
+## Neural Network Types
 
-Общие теоретические сведения о нейронных сетях находятся в файле [Doc/Theory.md](Doc/Theory.md), включая:
-- Введение в ИНС
-- Биологический и искусственный нейрон
-- Функции активации
-- Классификация нейронных сетей
+### Hopfield Network (Lab1)
+- **Type:** Auto-associative with feedback connections
+- **Training:** Unsupervised (Hebbian learning rule)
+- **Applications:** Associative memory, noisy pattern recognition
 
-## Типы нейронных сетей
+### Multilayer Perceptron (Lab2)
+- **Type:** Feedforward
+- **Training:** Supervised (backpropagation)
+- **Applications:** Classification, function approximation
 
-### Сеть Хопфилда (Lab1)
-- **Тип:** Автоассоциативная, с обратными связями
-- **Обучение:** Без учителя (правило Хебба)
-- **Применение:** Ассоциативная память, распознавание зашумленных образов
+### RBF Network (Lab3)
+- **Type:** Feedforward with radial basis functions
+- **Training:** Hybrid (clustering + gradient descent)
+- **Applications:** Classification with well-clustered data
 
-### Многослойный персептрон (Lab2)
-- **Тип:** С прямым распространением
-- **Обучение:** С учителем (backpropagation)
-- **Применение:** Классификация, аппроксимация функций
+### Competitive Network (Lab4)
+- **Type:** Self-organizing
+- **Training:** Unsupervised (competitive learning)
+- **Applications:** Clustering, data compression
 
-### Сеть РБФ (Lab3)
-- **Тип:** С прямым распространением, радиально-базисные функции
-- **Обучение:** Гибридное (кластеризация + градиентный спуск)
-- **Применение:** Классификация при хорошей кластеризации данных
+## Requirements
 
-### Конкурентная сеть (Lab4)
-- **Тип:** Самоорганизующаяся
-- **Обучение:** Без учителя (конкурентное обучение)
-- **Применение:** Кластеризация, сжатие данных
+- **Compiler:** g++ with C++17 support
+- **LaTeX:** XeLaTeX for report compilation
+- **Pattern sizes:** 
+  - Lab1: 10×10 (binary/bipolar)
+  - Lab2-4: 6×6
 
-## Литература
+## Quick Start
+
+```bash
+# Build and run any lab
+cd Lab1
+g++ -std=c++17 -O2 solution.cpp -o solution
+./solution
+
+# Compile LaTeX report
+xelatex report.tex
+```
+
+## References
 
 1. **Aleksander I., Morton H.** An Introduction to Neural Computing. — London: Chapman & Hall, 1990.
 
-2. **Головко В.А.** Нейронные сети: обучение, организация и применение. Учеб. пособие для вузов. — М.: ИПРЖР, 2001. — 256 с.
+2. **Bishop C.M.** Neural Networks for Pattern Recognition. — Oxford: Clarendon Press, 1995. — 482 p.
 
-3. **Bishop C.M.** Neural Networks for Pattern Recognition. — Oxford: Clarendon Press, 1995. — 482 p.
+3. **Hopfield J.J.** Neural networks and physical systems with emergent collective computational abilities // Proc. Natl. Acad. Sci. USA. — 1982. — Vol. 79. — P. 2554.
 
-4. **Hopfield J.J.** Neural networks and physical systems with emergent collective computational abilities // Proc. Natl. Acad. Sci. USA. — 1982. — Vol. 79. — P. 2554.
+4. **Kohonen T.** Self-organization and associative memory. — Springer-Verlag, 1989. — 312 p.
 
-5. **Kohonen T.** Self-organization and associative memory. — Springer-Verlag, 1989. — 312 p.
+5. **Kohonen T.** Self-organizing maps. — Springer-Verlag, 1995. — 362 p.
 
-6. **Kohonen T.** Self-organized formation of topologically correct feature maps // Biol. Cybernetics. — 1982. — Vol. 43. — P. 56-69.
+6. **Rumelhart D.E., Hinton G.E., Williams R.J.** Learning internal representation by error propagation. Parallel Distributed Processing. — MIT Press, 1986. — Vol. 1. — P. 318-362.
 
-7. **Kohonen T.** Self-organizing maps. — Springer-Verlag, 1995. — 362 p.
+7. **Haykin S.** Neural Networks: A Comprehensive Foundation, 2nd ed. — Prentice Hall, 1998.
 
-8. **Rumelhart D.E., Hinton G.E., Williams R.J.** Learning internal representation by error propagation: McClelland J.L. and Rumelhart D.E. (Eds). Parallel Distributed Processing: Exploration in the Microstructure of Cognition. — MIT Press, Cambridge MA. — 1986. — Vol. 1. — P. 318-362.
-
-9. **Хайкин С.** Нейронные сети: полный курс, 2-е изд.: Пер. с англ. — М.: Издательский дом «Вильямс», 2006. — 1104 с.
-
-10. **Ежов А.А., Шумский С.А.** Нейрокомпьютинг и его применение в экономике и бизнесе. — М.: Мир, 1998. — 222 c.
-
-## Требования
-
-- **Язык программирования:** C/C++
-- **Размер образов:** 
-  - Lab1: 10×10 (бинарные/биполярные)
-  - Lab2-4: 6×6
-
-## Лицензия
+## License
 
 MIT License
