@@ -16,43 +16,43 @@ using namespace std;
 namespace fs = std::filesystem;
 
 // ============================================================================
-// Константы
+// Constants
 // ============================================================================
-const int IMAGE_SIZE = 6;                      // Размер образа 6x6
-const int N = IMAGE_SIZE * IMAGE_SIZE;          // 36 нейронов входного слоя
-const int NUM_CLASSES = 5;                     // Количество классов образов
-const int NUM_NEURONS = 5;                     // Количество выходных нейронов (кластеров)
-const int NUM_TRAINING_SAMPLES = 15;           // Образов для обучения (больше чем нейронов)
-const int NUM_TEST_SAMPLES = 10;               // Тестовых образов на класс
-const double LEARNING_RATE = 0.1;               // Скорость обучения β
-const double MAX_DISTANCE = 0.01;               // Максимальное расстояние для завершения обучения
-const int MAX_ITERATIONS = 1000;                // Максимум итераций обучения
+const int IMAGE_SIZE = 6;                      // Image size 6x6
+const int N = IMAGE_SIZE * IMAGE_SIZE;          // 36 input neurons
+const int NUM_CLASSES = 5;                     // Number of pattern classes
+const int NUM_NEURONS = 5;                     // Number of output neurons (clusters)
+const int NUM_TRAINING_SAMPLES = 15;           // Training samples (more than neurons)
+const int NUM_TEST_SAMPLES = 10;               // Test samples per class
+const double LEARNING_RATE = 0.1;               // Learning rate beta
+const double MAX_DISTANCE = 0.01;               // Max distance for training termination
+const int MAX_ITERATIONS = 1000;                // Max training iterations
 
-// Пути к папкам
+// Directory paths
 const string PATTERNS_DIR = "patterns/";
 const string TESTS_DIR = "tests/";
 
 // ============================================================================
-// Типы данных
+// Data types
 // ============================================================================
-using Pattern = vector<double>;                // Нормированный вектор
-using WeightMatrix = vector<vector<double>>;   // Матрица весов [NUM_NEURONS][N]
+using Pattern = vector<double>;                // Normalized vector
+using WeightMatrix = vector<vector<double>>;   // Weight matrix [NUM_NEURONS][N]
 
-// Названия символов для вывода
+// Symbol names for output
 const string CLASS_NAMES[NUM_CLASSES] = {"LE", "GE", "NE", "AP", "CO"};
-const string CLASS_NAMES_RU[NUM_CLASSES] = {"≤", "≥", "≠", "≈", "≅"};
+const string CLASS_SYMBOLS[NUM_CLASSES] = {"<=", ">=", "!=", "~~", "~="};
 
 // ============================================================================
-// Глобальные переменные
+// Global variables
 // ============================================================================
-vector<Pattern> trainingPatterns;              // Обучающие образы
-vector<int> trainingClasses;                   // Классы обучающих образов
-WeightMatrix weights;                           // Матрица весов [NUM_NEURONS][N]
-vector<int> winCounts;                         // Количество побед каждого нейрона
-mt19937 rng;                                   // Генератор случайных чисел
+vector<Pattern> trainingPatterns;              // Training patterns
+vector<int> trainingClasses;                   // Training pattern classes
+WeightMatrix weights;                           // Weight matrix [NUM_NEURONS][N]
+vector<int> winCounts;                         // Win count for each neuron
+mt19937 rng;                                   // Random number generator
 
 // ============================================================================
-// Нормировка вектора
+// Normalize vector
 // ============================================================================
 void normalize(Pattern& pattern) {
     double norm = 0.0;
@@ -69,12 +69,12 @@ void normalize(Pattern& pattern) {
 }
 
 // ============================================================================
-// Загрузка паттерна из файла
+// Load pattern from file
 // ============================================================================
 bool loadPattern(const string& filename, Pattern& pattern) {
     ifstream file(filename);
     if (!file.is_open()) {
-        cerr << "Ошибка: не удалось открыть файл " << filename << endl;
+        cerr << "Error: cannot open file " << filename << endl;
         return false;
     }
     
@@ -85,13 +85,13 @@ bool loadPattern(const string& filename, Pattern& pattern) {
     int idx = 0;
     
     while (getline(file, line) && idx < N) {
-        // Пропускаем комментарии
+        // Skip comments
         if (line.empty() || line[0] == '#') continue;
         
         istringstream iss(line);
         int value;
         while (iss >> value && idx < N) {
-            // Преобразуем 0/1 в биполярный формат -1/1, затем нормируем
+            // Convert 0/1 to bipolar format -1/1, then normalize
             pattern[idx++] = (value == 1) ? 1.0 : -1.0;
         }
     }
@@ -106,12 +106,12 @@ bool loadPattern(const string& filename, Pattern& pattern) {
 }
 
 // ============================================================================
-// Сохранение паттерна в файл
+// Save pattern to file
 // ============================================================================
 void savePattern(const string& filename, const Pattern& pattern, const string& header = "") {
     ofstream file(filename);
     if (!file.is_open()) {
-        cerr << "Ошибка: не удалось создать файл " << filename << endl;
+        cerr << "Error: cannot create file " << filename << endl;
         return;
     }
     
@@ -122,7 +122,7 @@ void savePattern(const string& filename, const Pattern& pattern, const string& h
     for (int i = 0; i < IMAGE_SIZE; i++) {
         for (int j = 0; j < IMAGE_SIZE; j++) {
             int idx = i * IMAGE_SIZE + j;
-            // Преобразуем из биполярного формата обратно в 0/1
+            // Convert from bipolar format back to 0/1
             file << (pattern[idx] > 0 ? 1 : 0);
             if (j < IMAGE_SIZE - 1) file << " ";
         }
@@ -133,25 +133,25 @@ void savePattern(const string& filename, const Pattern& pattern, const string& h
 }
 
 // ============================================================================
-// Инициализация эталонных образов из файлов
+// Initialize reference patterns from files
 // ============================================================================
 bool initPatterns() {
     for (int i = 0; i < NUM_CLASSES; i++) {
         string filename = PATTERNS_DIR + CLASS_NAMES[i] + ".txt";
         Pattern pattern;
         if (!loadPattern(filename, pattern)) {
-            cerr << "Ошибка загрузки паттерна " << CLASS_NAMES[i] << endl;
+            cerr << "Error loading pattern " << CLASS_NAMES[i] << endl;
             return false;
         }
         
-        // Добавляем несколько вариантов каждого образа для обучения
+        // Add multiple variants of each pattern for training
         for (int j = 0; j < NUM_TRAINING_SAMPLES / NUM_CLASSES; j++) {
             trainingPatterns.push_back(pattern);
             trainingClasses.push_back(i);
         }
     }
     
-    // Добавляем еще образы, чтобы общее количество превышало NUM_NEURONS
+    // Add more patterns so total exceeds NUM_NEURONS
     while (trainingPatterns.size() < NUM_TRAINING_SAMPLES) {
         int classIdx = trainingPatterns.size() % NUM_CLASSES;
         string filename = PATTERNS_DIR + CLASS_NAMES[classIdx] + ".txt";
@@ -166,7 +166,7 @@ bool initPatterns() {
 }
 
 // ============================================================================
-// Инициализация весов случайными значениями
+// Initialize weights with random values
 // ============================================================================
 void initWeights() {
     weights.resize(NUM_NEURONS);
@@ -184,7 +184,7 @@ void initWeights() {
 }
 
 // ============================================================================
-// Нахождение нейрона-победителя (обычный метод)
+// Find winner neuron (standard method)
 // ============================================================================
 int findWinner(const Pattern& input) {
     int winner = 0;
@@ -206,14 +206,14 @@ int findWinner(const Pattern& input) {
 }
 
 // ============================================================================
-// Нахождение нейрона-победителя (частотно-зависимый метод)
+// Find winner neuron (frequency-dependent method)
 // ============================================================================
 int findWinnerFrequency(const Pattern& input) {
     int winner = 0;
     double minDistance = 1e10;
     
     for (int j = 0; j < NUM_NEURONS; j++) {
-        // Вычисляем евклидово расстояние
+        // Compute Euclidean distance
         double distance = 0.0;
         for (int i = 0; i < N; i++) {
             double diff = input[i] - weights[j][i];
@@ -221,7 +221,7 @@ int findWinnerFrequency(const Pattern& input) {
         }
         distance = sqrt(distance);
         
-        // Умножаем на количество побед (частотно-зависимое обучение)
+        // Multiply by win count (frequency-dependent learning)
         double weightedDistance = distance * (1.0 + winCounts[j]);
         
         if (weightedDistance < minDistance) {
@@ -234,10 +234,10 @@ int findWinnerFrequency(const Pattern& input) {
 }
 
 // ============================================================================
-// Обучение сети
+// Train network
 // ============================================================================
 void train() {
-    cout << "Обучение конкурентной сети..." << endl;
+    cout << "Training competitive network..." << endl;
     
     bool converged = false;
     int iteration = 0;
@@ -246,7 +246,7 @@ void train() {
         iteration++;
         double maxDistance = 0.0;
         
-        // Перемешиваем обучающие образы
+        // Shuffle training patterns
         vector<int> indices(trainingPatterns.size());
         for (size_t i = 0; i < indices.size(); i++) {
             indices[i] = i;
@@ -256,11 +256,11 @@ void train() {
         for (int idx : indices) {
             const Pattern& input = trainingPatterns[idx];
             
-            // Находим нейрон-победитель
+            // Find winner neuron
             int winner = findWinnerFrequency(input);
             winCounts[winner]++;
             
-            // Вычисляем расстояние до обновления
+            // Compute distance before update
             double distance = 0.0;
             for (int i = 0; i < N; i++) {
                 double diff = input[i] - weights[winner][i];
@@ -269,35 +269,35 @@ void train() {
             distance = sqrt(distance);
             maxDistance = max(maxDistance, distance);
             
-            // Обновляем веса нейрона-победителя
+            // Update winner weights
             Pattern newWeights(N);
             for (int i = 0; i < N; i++) {
                 newWeights[i] = weights[winner][i] + LEARNING_RATE * (input[i] - weights[winner][i]);
             }
             
-            // Нормируем новые веса
+            // Normalize new weights
             normalize(newWeights);
             weights[winner] = newWeights;
         }
         
-        // Проверяем условие завершения
+        // Check termination condition
         if (maxDistance < MAX_DISTANCE) {
             converged = true;
-            cout << "  Обучение завершено на итерации " << iteration 
-                 << " (макс. расстояние: " << fixed << setprecision(4) << maxDistance << ")" << endl;
+            cout << "  Convergence reached at iteration " << iteration 
+                 << " (max distance: " << fixed << setprecision(4) << maxDistance << ")" << endl;
         } else if (iteration % 100 == 0) {
-            cout << "  Итерация " << iteration << ", макс. расстояние: " 
+            cout << "  Iteration " << iteration << ", max distance: " 
                  << fixed << setprecision(4) << maxDistance << endl;
         }
     }
     
     if (!converged) {
-        cout << "  Достигнуто максимальное количество итераций (" << MAX_ITERATIONS << ")" << endl;
+        cout << "  Maximum iterations reached (" << MAX_ITERATIONS << ")" << endl;
     }
 }
 
 // ============================================================================
-// Добавление шума к образу
+// Add noise to pattern
 // ============================================================================
 Pattern addNoise(const Pattern& original, int noisePercent) {
     Pattern noisy = original;
@@ -316,7 +316,7 @@ Pattern addNoise(const Pattern& original, int noisePercent) {
 }
 
 // ============================================================================
-// Вывод образа в консоль
+// Print pattern to console
 // ============================================================================
 void printPattern(const Pattern& p, const string& title = "") {
     if (!title.empty()) cout << title << ":" << endl;
@@ -325,7 +325,7 @@ void printPattern(const Pattern& p, const string& title = "") {
         cout << "  ";
         for (int j = 0; j < IMAGE_SIZE; j++) {
             int idx = i * IMAGE_SIZE + j;
-            cout << (p[idx] > 0 ? "■" : "□") << " ";
+            cout << (p[idx] > 0 ? "#" : ".") << " ";
         }
         cout << endl;
     }
@@ -333,21 +333,21 @@ void printPattern(const Pattern& p, const string& title = "") {
 }
 
 // ============================================================================
-// Генерация тестовых образов
+// Generate test patterns
 // ============================================================================
 void generateTestPatterns() {
-    cout << "Генерация тестовых образов..." << endl;
+    cout << "Generating test patterns..." << endl;
     
     int noiseLevels[] = {10, 20, 30, 40, 50};
     int numNoiseLevels = sizeof(noiseLevels) / sizeof(noiseLevels[0]);
     
     for (int c = 0; c < NUM_CLASSES; c++) {
-        // Загружаем эталонный образ
+        // Load reference pattern
         string filename = PATTERNS_DIR + CLASS_NAMES[c] + ".txt";
         Pattern pattern;
         if (!loadPattern(filename, pattern)) continue;
         
-        // Создаём подпапку для каждого класса
+        // Create subfolder for each class
         string classDir = TESTS_DIR + CLASS_NAMES[c] + "/";
         fs::create_directories(classDir);
         
@@ -359,70 +359,68 @@ void generateTestPatterns() {
             for (int t = 0; t < NUM_TEST_SAMPLES; t++) {
                 Pattern noisy = addNoise(pattern, noise);
                 string testFilename = noiseDir + "test_" + to_string(t + 1) + ".txt";
-                string header = "Класс " + CLASS_NAMES_RU[c] + ", шум " + to_string(noise) + "%, тест " + to_string(t + 1);
+                string header = "Class " + CLASS_SYMBOLS[c] + ", noise " + to_string(noise) + "%, test " + to_string(t + 1);
                 savePattern(testFilename, noisy, header);
             }
         }
     }
     
-    cout << "Тестовые образы сохранены в папку " << TESTS_DIR << endl;
+    cout << "Test patterns saved to " << TESTS_DIR << endl;
 }
 
 // ============================================================================
-// Главная функция
+// Main function
 // ============================================================================
 int main() {
-    setlocale(LC_ALL, "Russian");
-    
-    // Инициализация генератора случайных чисел
+    // Initialize random number generator
     unsigned seed = chrono::system_clock::now().time_since_epoch().count();
     rng.seed(seed);
     
     cout << "========================================================" << endl;
-    cout << "    ЛАБОРАТОРНАЯ РАБОТА №4: КОНКУРЕНТНАЯ СЕТЬ" << endl;
-    cout << "    Вариант 5: символы ≤, ≥, ≠, ≈, ≅" << endl;
+    cout << "    LAB 4: COMPETITIVE NEURAL NETWORK" << endl;
+    cout << "    Variant 5: Symbols <=, >=, !=, ~~, ~=" << endl;
     cout << "========================================================" << endl << endl;
     
-    // Создание директорий
+    // Create directories
     fs::create_directories(PATTERNS_DIR);
     fs::create_directories(TESTS_DIR);
     
-    // Загрузка эталонных образов
-    cout << "1. Загрузка эталонных образов из " << PATTERNS_DIR << "..." << endl;
+    // Load reference patterns
+    cout << "1. Loading reference patterns from " << PATTERNS_DIR << "..." << endl;
     if (!initPatterns()) {
-        cerr << "Ошибка загрузки паттернов!" << endl;
+        cerr << "Error loading patterns!" << endl;
         return 1;
     }
     
-    cout << "   Загружено " << trainingPatterns.size() << " обучающих образов" << endl << endl;
+    cout << "   Loaded " << trainingPatterns.size() << " training patterns" << endl << endl;
     
-    // Вывод эталонных образов
-    cout << "Эталонные образы (6x6):" << endl;
-    cout << "------------------------" << endl;
+    // Display reference patterns
+    cout << "Reference patterns (6x6):" << endl;
+    cout << "-------------------------" << endl;
     for (int i = 0; i < NUM_CLASSES; i++) {
         string filename = PATTERNS_DIR + CLASS_NAMES[i] + ".txt";
         Pattern pattern;
         if (loadPattern(filename, pattern)) {
-            printPattern(pattern, "Класс " + CLASS_NAMES_RU[i] + " (" + CLASS_NAMES[i] + ")");
+            printPattern(pattern, "Class " + CLASS_SYMBOLS[i] + " (" + CLASS_NAMES[i] + ")");
         }
     }
     
-    // Инициализация весов
-    cout << "2. Инициализация весов случайными значениями..." << endl;
+    // Initialize weights
+    cout << "2. Initializing weights with random values..." << endl;
     initWeights();
-    cout << "   Матрица весов инициализирована (" << NUM_NEURONS << " нейронов x " << N << " входов)" << endl << endl;
+    cout << "   Weight matrix initialized (" << NUM_NEURONS << " neurons x " << N << " inputs)" << endl << endl;
     
-    // Обучение сети
-    cout << "3. Обучение сети..." << endl;
+    // Train network
+    cout << "3. Training network..." << endl;
     train();
     cout << endl;
     
-    // Определение соответствия нейронов классам
-    cout << "4. Определение соответствия нейронов классам:" << endl;
-    cout << "----------------------------------------------" << endl;
+    // Determine neuron-to-class mapping
+    cout << "4. Determining neuron-to-class mapping:" << endl;
+    cout << "---------------------------------------" << endl;
     
-    map<int, int> neuronToClass;  // нейрон -> класс
-    map<int, vector<int>> classToNeurons;  // класс -> нейроны
+    map<int, int> neuronToClass;  // neuron -> class
+    map<int, vector<int>> classToNeurons;  // class -> neurons
     
     for (size_t i = 0; i < trainingPatterns.size(); i++) {
         int winner = findWinner(trainingPatterns[i]);
@@ -434,54 +432,54 @@ int main() {
         }
     }
     
-    // Определяем основной нейрон для каждого класса
+    // Determine main neuron for each class
     for (int c = 0; c < NUM_CLASSES; c++) {
         if (!classToNeurons[c].empty()) {
             int mainNeuron = classToNeurons[c][0];
             neuronToClass[mainNeuron] = c;
-            cout << "Класс " << CLASS_NAMES_RU[c] << " → Нейрон-победитель: #" << mainNeuron << endl;
+            cout << "Class " << CLASS_SYMBOLS[c] << " -> Winner neuron: #" << mainNeuron << endl;
         }
     }
     cout << endl;
     
-    // Генерация тестовых образов
-    cout << "5. Генерация тестовых образов с разным уровнем шума..." << endl;
+    // Generate test patterns
+    cout << "5. Generating test patterns with various noise levels..." << endl;
     generateTestPatterns();
     cout << endl;
     
-    // Демонстрация работы
-    cout << "6. Демонстрация распознавания (30% шума):" << endl;
-    cout << "----------------------------------------" << endl;
+    // Demonstration
+    cout << "6. Recognition demonstration (30% noise):" << endl;
+    cout << "------------------------------------------" << endl;
     
-    string demoFilename = PATTERNS_DIR + CLASS_NAMES[2] + ".txt";  // Класс ≠
+    string demoFilename = PATTERNS_DIR + CLASS_NAMES[2] + ".txt";  // Class !=
     Pattern demoPattern;
     if (loadPattern(demoFilename, demoPattern)) {
         Pattern demoNoisy = addNoise(demoPattern, 30);
-        cout << "Зашумленный образ класса " << CLASS_NAMES_RU[2] << ":" << endl;
+        cout << "Noisy pattern of class " << CLASS_SYMBOLS[2] << ":" << endl;
         printPattern(demoNoisy);
         
         int winner = findWinner(demoNoisy);
-        cout << "Результат: Нейрон-победитель #" << winner;
+        cout << "Result: Winner neuron #" << winner;
         
         if (neuronToClass.find(winner) != neuronToClass.end()) {
             int recognizedClass = neuronToClass[winner];
-            cout << " (соответствует классу " << CLASS_NAMES_RU[recognizedClass] << ")";
+            cout << " (corresponds to class " << CLASS_SYMBOLS[recognizedClass] << ")";
             if (recognizedClass == 2) {
-                cout << " ✓" << endl;
+                cout << " OK" << endl;
             } else {
-                cout << " ✗" << endl;
+                cout << " WRONG" << endl;
             }
         } else {
-            cout << " (класс не определен)" << endl;
+            cout << " (class not determined)" << endl;
         }
     }
     cout << endl;
     
-    // Статистика кластеризации
-    cout << "7. Статистика кластеризации:" << endl;
-    cout << "=============================" << endl;
+    // Clustering statistics
+    cout << "7. Clustering statistics:" << endl;
+    cout << "=========================" << endl;
     
-    map<int, map<int, int>> neuronStats;  // нейрон -> (класс -> количество)
+    map<int, map<int, int>> neuronStats;  // neuron -> (class -> count)
     
     for (size_t i = 0; i < trainingPatterns.size(); i++) {
         int winner = findWinner(trainingPatterns[i]);
@@ -504,26 +502,26 @@ int main() {
             }
         }
         
-        cout << "Нейрон #" << j << ": " << total << " образов";
+        cout << "Neuron #" << j << ": " << total << " patterns";
         if (mainClass >= 0) {
-            cout << " (основной класс: " << CLASS_NAMES_RU[mainClass] << ", " 
-                 << mainClassCount << " образов)";
+            cout << " (main class: " << CLASS_SYMBOLS[mainClass] << ", " 
+                 << mainClassCount << " patterns)";
         }
         cout << endl;
     }
     cout << endl;
     
-    // Тестирование на зашумленных образах
-    cout << "8. Тестирование на зашумленных образах:" << endl;
-    cout << "=======================================" << endl;
+    // Test on noisy patterns
+    cout << "8. Testing on noisy patterns:" << endl;
+    cout << "=============================" << endl;
     
     int noiseLevels[] = {10, 20, 30, 40, 50};
     int numNoiseLevels = sizeof(noiseLevels) / sizeof(noiseLevels[0]);
     
-    cout << "┌────────┬───────┬──────────────┬──────────────┐" << endl;
-    cout << "│ Класс  │  Шум  │  Правильно   │  Неправильно  │" << endl;
-    cout << "│        │   %   │              │               │" << endl;
-    cout << "├────────┼───────┼──────────────┼──────────────┤" << endl;
+    cout << "+--------+-------+--------------+---------------+" << endl;
+    cout << "| Class  | Noise |   Correct    |   Incorrect   |" << endl;
+    cout << "|        |   %   |              |               |" << endl;
+    cout << "+--------+-------+--------------+---------------+" << endl;
     
     for (int c = 0; c < NUM_CLASSES; c++) {
         for (int n = 0; n < numNoiseLevels; n++) {
@@ -546,26 +544,26 @@ int main() {
                 }
             }
             
-            cout << "│   " << CLASS_NAMES_RU[c] << "    │  " 
-                 << setw(3) << noise << "  │     " 
-                 << setw(3) << correct << "/" << setw(2) << total << "      │     "
-                 << setw(3) << (total - correct) << "/" << setw(2) << total << "       │" << endl;
+            cout << "|  " << setw(4) << CLASS_SYMBOLS[c] << "  |  " 
+                 << setw(3) << noise << "  |     " 
+                 << setw(3) << correct << "/" << setw(2) << total << "     |     "
+                 << setw(3) << (total - correct) << "/" << setw(2) << total << "      |" << endl;
         }
         if (c < NUM_CLASSES - 1) {
-            cout << "├────────┼───────┼──────────────┼──────────────┤" << endl;
+            cout << "+--------+-------+--------------+---------------+" << endl;
         }
     }
     
-    cout << "└────────┴───────┴──────────────┴──────────────┘" << endl << endl;
+    cout << "+--------+-------+--------------+---------------+" << endl << endl;
     
-    // Выводы
-    cout << "9. Выводы:" << endl;
-    cout << "==========" << endl;
-    cout << "- Конкурентная сеть успешно обучена на " << trainingPatterns.size() << " образах" << endl;
-    cout << "- Сеть разбила образы на " << NUM_NEURONS << " кластеров" << endl;
-    cout << "- Похожие образы спроецированы в один кластер" << endl;
-    cout << "- При низком уровне шума (10-20%) распознавание работает хорошо" << endl;
-    cout << "- При высоком уровне шума (40-50%) качество распознавания снижается" << endl;
+    // Conclusions
+    cout << "9. Conclusions:" << endl;
+    cout << "===============" << endl;
+    cout << "- Competitive network trained successfully on " << trainingPatterns.size() << " patterns" << endl;
+    cout << "- Network clustered patterns into " << NUM_NEURONS << " clusters" << endl;
+    cout << "- Similar patterns were projected into the same cluster" << endl;
+    cout << "- At low noise levels (10-20%) recognition works well" << endl;
+    cout << "- At high noise levels (40-50%) recognition quality decreases" << endl;
     
     return 0;
 }

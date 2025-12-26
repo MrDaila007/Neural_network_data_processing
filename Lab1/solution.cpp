@@ -15,42 +15,41 @@ using namespace std;
 namespace fs = std::filesystem;
 
 // ============================================================================
-// Константы
+// Constants
 // ============================================================================
-const int IMAGE_SIZE = 10;                      // Размер образа 10x10
-const int N = IMAGE_SIZE * IMAGE_SIZE;          // 100 нейронов
-const int NUM_PATTERNS = 3;                     // Количество эталонных образов
-const int MAX_ITERATIONS = 1000;                // Максимум итераций воспроизведения
-const int TESTS_PER_NOISE_LEVEL = 10;           // Тестов на каждый уровень шума
+const int IMAGE_SIZE = 10;                      // Image size 10x10
+const int N = IMAGE_SIZE * IMAGE_SIZE;          // 100 neurons
+const int NUM_PATTERNS = 3;                     // Number of reference patterns
+const int MAX_ITERATIONS = 1000;                // Max recall iterations
+const int TESTS_PER_NOISE_LEVEL = 10;           // Tests per noise level
 
-// Пути к папкам
+// Directory paths
 const string PATTERNS_DIR = "patterns/";
 const string TESTS_DIR = "tests/";
 
 // ============================================================================
-// Типы данных
+// Data types
 // ============================================================================
-using Pattern = array<int, N>;                  // Биполярный вектор {-1, 1}
-using WeightMatrix = array<array<int, N>, N>;   // Матрица весов 100x100
+using Pattern = array<int, N>;                  // Bipolar vector {-1, 1}
+using WeightMatrix = array<array<int, N>, N>;   // Weight matrix 100x100
 
-// Названия букв для вывода
+// Pattern names for output
 const string PATTERN_NAMES[NUM_PATTERNS] = {"D", "N", "X"};
-const string PATTERN_NAMES_RU[NUM_PATTERNS] = {"Д", "Н", "Х"};
 
 // ============================================================================
-// Глобальные переменные
+// Global variables
 // ============================================================================
-Pattern patterns[NUM_PATTERNS];     // Эталонные образы
-WeightMatrix weights;               // Матрица весов
-mt19937 rng;                        // Генератор случайных чисел
+Pattern patterns[NUM_PATTERNS];     // Reference patterns
+WeightMatrix weights;               // Weight matrix
+mt19937 rng;                        // Random number generator
 
 // ============================================================================
-// Загрузка паттерна из файла
+// Load pattern from file
 // ============================================================================
 bool loadPattern(const string& filename, Pattern& pattern) {
     ifstream file(filename);
     if (!file.is_open()) {
-        cerr << "Ошибка: не удалось открыть файл " << filename << endl;
+        cerr << "Error: cannot open file " << filename << endl;
         return false;
     }
     
@@ -58,13 +57,13 @@ bool loadPattern(const string& filename, Pattern& pattern) {
     int idx = 0;
     
     while (getline(file, line) && idx < N) {
-        // Пропускаем комментарии
+        // Skip comments
         if (line.empty() || line[0] == '#') continue;
         
         istringstream iss(line);
         int value;
         while (iss >> value && idx < N) {
-            // Преобразуем 0/1 в биполярный формат -1/1
+            // Convert 0/1 to bipolar format -1/1
             pattern[idx++] = (value == 1) ? 1 : -1;
         }
     }
@@ -74,12 +73,12 @@ bool loadPattern(const string& filename, Pattern& pattern) {
 }
 
 // ============================================================================
-// Сохранение паттерна в файл
+// Save pattern to file
 // ============================================================================
 void savePattern(const string& filename, const Pattern& pattern, const string& header = "") {
     ofstream file(filename);
     if (!file.is_open()) {
-        cerr << "Ошибка: не удалось создать файл " << filename << endl;
+        cerr << "Error: cannot create file " << filename << endl;
         return;
     }
     
@@ -100,13 +99,13 @@ void savePattern(const string& filename, const Pattern& pattern, const string& h
 }
 
 // ============================================================================
-// Инициализация эталонных образов из файлов
+// Initialize reference patterns from files
 // ============================================================================
 bool initPatterns() {
     for (int i = 0; i < NUM_PATTERNS; i++) {
         string filename = PATTERNS_DIR + PATTERN_NAMES[i] + ".txt";
         if (!loadPattern(filename, patterns[i])) {
-            cerr << "Ошибка загрузки паттерна " << PATTERN_NAMES[i] << endl;
+            cerr << "Error loading pattern " << PATTERN_NAMES[i] << endl;
             return false;
         }
     }
@@ -114,7 +113,7 @@ bool initPatterns() {
 }
 
 // ============================================================================
-// Обучение сети по правилу Хебба
+// Train network using Hebbian learning rule
 // ============================================================================
 void train() {
     for (int i = 0; i < N; i++) {
@@ -135,7 +134,7 @@ void train() {
 }
 
 // ============================================================================
-// Синхронное воспроизведение
+// Synchronous recall
 // ============================================================================
 Pattern recallSync(const Pattern& input, int& iterations) {
     Pattern current = input;
@@ -161,7 +160,7 @@ Pattern recallSync(const Pattern& input, int& iterations) {
 }
 
 // ============================================================================
-// Асинхронное воспроизведение
+// Asynchronous recall
 // ============================================================================
 Pattern recallAsync(const Pattern& input, int& iterations) {
     Pattern current = input;
@@ -194,7 +193,7 @@ Pattern recallAsync(const Pattern& input, int& iterations) {
 }
 
 // ============================================================================
-// Добавление шума к образу
+// Add noise to pattern
 // ============================================================================
 Pattern addNoise(const Pattern& original, int noisePercent) {
     Pattern noisy = original;
@@ -212,7 +211,7 @@ Pattern addNoise(const Pattern& original, int noisePercent) {
 }
 
 // ============================================================================
-// Сравнение образов
+// Compare patterns
 // ============================================================================
 int findClosestPattern(const Pattern& test) {
     int bestMatch = -1;
@@ -233,7 +232,7 @@ int findClosestPattern(const Pattern& test) {
 }
 
 // ============================================================================
-// Вывод образа в консоль
+// Print pattern to console
 // ============================================================================
 void printPattern(const Pattern& p, const string& title = "") {
     if (!title.empty()) cout << title << ":" << endl;
@@ -250,7 +249,7 @@ void printPattern(const Pattern& p, const string& title = "") {
 }
 
 // ============================================================================
-// Вычисление процента сходства
+// Calculate similarity percentage
 // ============================================================================
 double calculateSimilarity(const Pattern& a, const Pattern& b) {
     int matches = 0;
@@ -261,16 +260,16 @@ double calculateSimilarity(const Pattern& a, const Pattern& b) {
 }
 
 // ============================================================================
-// Генерация тестовых образов и сохранение в папку tests/
+// Generate test patterns and save to tests/ folder
 // ============================================================================
 void generateTestPatterns() {
-    cout << "Генерация тестовых образов..." << endl;
+    cout << "Generating test patterns..." << endl;
     
     int noiseLevels[] = {10, 20, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100};
     int numNoiseLevels = sizeof(noiseLevels) / sizeof(noiseLevels[0]);
     
     for (int p = 0; p < NUM_PATTERNS; p++) {
-        // Создаём подпапку для каждой буквы
+        // Create subfolder for each letter
         string letterDir = TESTS_DIR + PATTERN_NAMES[p] + "/";
         fs::create_directories(letterDir);
         
@@ -282,17 +281,17 @@ void generateTestPatterns() {
             for (int t = 0; t < TESTS_PER_NOISE_LEVEL; t++) {
                 Pattern noisy = addNoise(patterns[p], noise);
                 string filename = noiseDir + "test_" + to_string(t + 1) + ".txt";
-                string header = "Буква " + PATTERN_NAMES_RU[p] + ", шум " + to_string(noise) + "%, тест " + to_string(t + 1);
+                string header = "Letter " + PATTERN_NAMES[p] + ", noise " + to_string(noise) + "%, test " + to_string(t + 1);
                 savePattern(filename, noisy, header);
             }
         }
     }
     
-    cout << "Тестовые образы сохранены в папку " << TESTS_DIR << endl;
+    cout << "Test patterns saved to " << TESTS_DIR << endl;
 }
 
 // ============================================================================
-// Структура результатов теста
+// Test result structure
 // ============================================================================
 struct TestResult {
     int correctSync;
@@ -305,7 +304,7 @@ struct TestResult {
 };
 
 // ============================================================================
-// Тестирование с загрузкой из файлов
+// Run tests from files
 // ============================================================================
 TestResult runTestFromFiles(int patternIdx, int noisePercent) {
     TestResult result = {0, 0, 0, 0.0, 0.0, 0.0, 0.0};
@@ -322,7 +321,7 @@ TestResult runTestFromFiles(int patternIdx, int noisePercent) {
         
         result.total++;
         
-        // Синхронное воспроизведение
+        // Synchronous recall
         int iterSync;
         Pattern resultSync = recallSync(noisy, iterSync);
         result.avgIterSync += iterSync;
@@ -332,7 +331,7 @@ TestResult runTestFromFiles(int patternIdx, int noisePercent) {
             result.correctSync++;
         }
         
-        // Асинхронное воспроизведение
+        // Asynchronous recall
         int iterAsync;
         Pattern resultAsync = recallAsync(noisy, iterAsync);
         result.avgIterAsync += iterAsync;
@@ -354,7 +353,7 @@ TestResult runTestFromFiles(int patternIdx, int noisePercent) {
 }
 
 // ============================================================================
-// Сохранение результатов в файл
+// Save results to file
 // ============================================================================
 void saveResults(const string& filename) {
     ofstream file(filename);
@@ -363,13 +362,13 @@ void saveResults(const string& filename) {
     int noiseLevels[] = {10, 20, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100};
     int numNoiseLevels = sizeof(noiseLevels) / sizeof(noiseLevels[0]);
     
-    file << "Буква,Шум%,Sync_Успех,Sync_Итер,Sync_Сходство%,Async_Успех,Async_Итер,Async_Сходство%" << endl;
+    file << "Letter,Noise%,Sync_Success,Sync_Iter,Sync_Similarity%,Async_Success,Async_Iter,Async_Similarity%" << endl;
     
     for (int p = 0; p < NUM_PATTERNS; p++) {
         for (int n = 0; n < numNoiseLevels; n++) {
             TestResult res = runTestFromFiles(p, noiseLevels[n]);
             
-            file << PATTERN_NAMES_RU[p] << ","
+            file << PATTERN_NAMES[p] << ","
                  << noiseLevels[n] << ","
                  << res.correctSync << "/" << res.total << ","
                  << fixed << setprecision(1) << res.avgIterSync << ","
@@ -384,78 +383,76 @@ void saveResults(const string& filename) {
 }
 
 // ============================================================================
-// Главная функция
+// Main function
 // ============================================================================
 int main() {
-    setlocale(LC_ALL, "Russian");
-    
-    // Инициализация генератора случайных чисел
+    // Initialize random number generator
     unsigned seed = chrono::system_clock::now().time_since_epoch().count();
     rng.seed(seed);
     
     cout << "========================================================" << endl;
-    cout << "    ЛАБОРАТОРНАЯ РАБОТА №1: НЕЙРОННАЯ СЕТЬ ХОПФИЛДА" << endl;
-    cout << "    Вариант 5: буквы Д, Н, Х" << endl;
+    cout << "    LAB 1: HOPFIELD NEURAL NETWORK" << endl;
+    cout << "    Variant 5: Letters D, N, X" << endl;
     cout << "========================================================" << endl << endl;
     
-    // Создание директорий
+    // Create directories
     fs::create_directories(PATTERNS_DIR);
     fs::create_directories(TESTS_DIR);
     
-    // Загрузка эталонных образов
-    cout << "1. Загрузка эталонных образов из " << PATTERNS_DIR << "..." << endl;
+    // Load reference patterns
+    cout << "1. Loading reference patterns from " << PATTERNS_DIR << "..." << endl;
     if (!initPatterns()) {
-        cerr << "Ошибка загрузки паттернов!" << endl;
+        cerr << "Error loading patterns!" << endl;
         return 1;
     }
     
-    // Вывод эталонных образов
-    cout << "\nЭталонные образы (10x10):" << endl;
-    cout << "------------------------" << endl;
+    // Display reference patterns
+    cout << "\nReference patterns (10x10):" << endl;
+    cout << "---------------------------" << endl;
     for (int i = 0; i < NUM_PATTERNS; i++) {
-        printPattern(patterns[i], "Буква " + PATTERN_NAMES_RU[i]);
+        printPattern(patterns[i], "Letter " + PATTERN_NAMES[i]);
     }
     
-    // Обучение сети
-    cout << "2. Обучение сети по правилу Хебба..." << endl;
+    // Train network
+    cout << "2. Training network using Hebbian rule..." << endl;
     train();
-    cout << "   Матрица весов вычислена (" << N << "x" << N << ")" << endl << endl;
+    cout << "   Weight matrix computed (" << N << "x" << N << ")" << endl << endl;
     
-    // Генерация тестовых образов
-    cout << "3. Генерация тестовых образов с разным уровнем шума..." << endl;
+    // Generate test patterns
+    cout << "3. Generating test patterns with various noise levels..." << endl;
     generateTestPatterns();
     cout << endl;
     
-    // Демонстрация работы
-    cout << "4. Демонстрация распознавания (30% шума):" << endl;
-    cout << "----------------------------------------" << endl;
+    // Demonstration
+    cout << "4. Recognition demonstration (30% noise):" << endl;
+    cout << "------------------------------------------" << endl;
     
     Pattern demo = addNoise(patterns[0], 30);
-    cout << "Зашумленный образ буквы Д:" << endl;
+    cout << "Noisy pattern of letter D:" << endl;
     printPattern(demo);
     
     int iterDemo;
     Pattern recovered = recallSync(demo, iterDemo);
-    cout << "Восстановленный образ (синхронный режим, " << iterDemo << " итераций):" << endl;
+    cout << "Recovered pattern (synchronous mode, " << iterDemo << " iterations):" << endl;
     printPattern(recovered);
     
     int recognized = findClosestPattern(recovered);
-    cout << "Распознано как: " << PATTERN_NAMES_RU[recognized] << endl;
-    cout << "Сходство с эталоном: " << fixed << setprecision(1) 
+    cout << "Recognized as: " << PATTERN_NAMES[recognized] << endl;
+    cout << "Similarity to reference: " << fixed << setprecision(1) 
          << calculateSimilarity(recovered, patterns[0]) << "%" << endl << endl;
     
-    // Массовое тестирование из файлов
-    cout << "5. Тестирование распознавания из файлов:" << endl;
-    cout << "=========================================" << endl << endl;
+    // Mass testing from files
+    cout << "5. File-based recognition testing:" << endl;
+    cout << "===================================" << endl << endl;
     
     int noiseLevels[] = {10, 20, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100};
     int numNoiseLevels = sizeof(noiseLevels) / sizeof(noiseLevels[0]);
     
-    // Заголовок таблицы
-    cout << "┌────────┬───────┬─────────────────────────┬─────────────────────────┐" << endl;
-    cout << "│ Буква  │  Шум  │    Синхронный режим     │   Асинхронный режим     │" << endl;
-    cout << "│        │   %   │  Успех   │  Ср.итер.   │  Успех   │  Ср.итер.    │" << endl;
-    cout << "├────────┼───────┼──────────┼─────────────┼──────────┼──────────────┤" << endl;
+    // Table header
+    cout << "+--------+-------+-------------------------+-------------------------+" << endl;
+    cout << "| Letter | Noise |    Synchronous Mode     |   Asynchronous Mode     |" << endl;
+    cout << "|        |   %   |  Success |  Avg.iter.  |  Success |  Avg.iter.   |" << endl;
+    cout << "+--------+-------+----------+-------------+----------+--------------+" << endl;
     
     int totalCorrectSync[12] = {0};
     int totalCorrectAsync[12] = {0};
@@ -469,52 +466,52 @@ int main() {
             totalCorrectAsync[n] += res.correctAsync;
             totalTests[n] += res.total;
             
-            cout << "│   " << PATTERN_NAMES_RU[p] << "    │  " 
-                 << setw(3) << noiseLevels[n] << "  │  "
-                 << setw(2) << res.correctSync << "/" << setw(2) << res.total << "   │   "
-                 << setw(6) << fixed << setprecision(1) << res.avgIterSync << "    │  "
-                 << setw(2) << res.correctAsync << "/" << setw(2) << res.total << "   │   "
-                 << setw(7) << fixed << setprecision(1) << res.avgIterAsync << "    │" << endl;
+            cout << "|   " << PATTERN_NAMES[p] << "    |  " 
+                 << setw(3) << noiseLevels[n] << "  |  "
+                 << setw(2) << res.correctSync << "/" << setw(2) << res.total << "   |   "
+                 << setw(6) << fixed << setprecision(1) << res.avgIterSync << "    |  "
+                 << setw(2) << res.correctAsync << "/" << setw(2) << res.total << "   |   "
+                 << setw(7) << fixed << setprecision(1) << res.avgIterAsync << "    |" << endl;
         }
         if (p < NUM_PATTERNS - 1) {
-            cout << "├────────┼───────┼──────────┼─────────────┼──────────┼──────────────┤" << endl;
+            cout << "+--------+-------+----------+-------------+----------+--------------+" << endl;
         }
     }
     
-    cout << "└────────┴───────┴──────────┴─────────────┴──────────┴──────────────┘" << endl;
+    cout << "+--------+-------+----------+-------------+----------+--------------+" << endl;
     
-    // Общая статистика
-    cout << endl << "6. Сводная статистика по уровням шума:" << endl;
-    cout << "=======================================" << endl << endl;
+    // Summary statistics
+    cout << endl << "6. Summary statistics by noise level:" << endl;
+    cout << "======================================" << endl << endl;
     
-    cout << "┌───────┬─────────────────┬─────────────────┐" << endl;
-    cout << "│  Шум  │   Синхронный    │  Асинхронный    │" << endl;
-    cout << "│   %   │   % успеха      │   % успеха      │" << endl;
-    cout << "├───────┼─────────────────┼─────────────────┤" << endl;
+    cout << "+-------+-----------------+-----------------+" << endl;
+    cout << "| Noise |   Synchronous   |  Asynchronous   |" << endl;
+    cout << "|   %   |   % success     |   % success     |" << endl;
+    cout << "+-------+-----------------+-----------------+" << endl;
     
     for (int n = 0; n < numNoiseLevels; n++) {
         double successSync = totalTests[n] > 0 ? (100.0 * totalCorrectSync[n]) / totalTests[n] : 0;
         double successAsync = totalTests[n] > 0 ? (100.0 * totalCorrectAsync[n]) / totalTests[n] : 0;
         
-        cout << "│  " << setw(3) << noiseLevels[n] << "  │      "
-             << setw(5) << fixed << setprecision(1) << successSync << "%      │      "
-             << setw(5) << fixed << setprecision(1) << successAsync << "%      │" << endl;
+        cout << "|  " << setw(3) << noiseLevels[n] << "  |      "
+             << setw(5) << fixed << setprecision(1) << successSync << "%      |      "
+             << setw(5) << fixed << setprecision(1) << successAsync << "%      |" << endl;
     }
     
-    cout << "└───────┴─────────────────┴─────────────────┘" << endl;
+    cout << "+-------+-----------------+-----------------+" << endl;
     
-    // Сохранение результатов
-    cout << endl << "7. Сохранение результатов..." << endl;
+    // Save results
+    cout << endl << "7. Saving results..." << endl;
     saveResults(TESTS_DIR + "results.csv");
-    cout << "   Результаты сохранены в " << TESTS_DIR << "results.csv" << endl;
+    cout << "   Results saved to " << TESTS_DIR << "results.csv" << endl;
     
-    // Выводы
-    cout << endl << "8. Выводы:" << endl;
-    cout << "==========" << endl;
-    cout << "- Сеть Хопфилда успешно обучена на 3 образах (Д, Н, Х)" << endl;
-    cout << "- При низком уровне шума (до 30%) распознавание работает хорошо" << endl;
-    cout << "- При шуме выше 40-50% качество распознавания значительно падает" << endl;
-    cout << "- Асинхронный режим обычно требует больше итераций" << endl;
+    // Conclusions
+    cout << endl << "8. Conclusions:" << endl;
+    cout << "===============" << endl;
+    cout << "- Hopfield network successfully trained on 3 patterns (D, N, X)" << endl;
+    cout << "- At low noise levels (up to 30%) recognition works well" << endl;
+    cout << "- At noise above 40-50% recognition quality drops significantly" << endl;
+    cout << "- Asynchronous mode usually requires more iterations" << endl;
     
     return 0;
 }

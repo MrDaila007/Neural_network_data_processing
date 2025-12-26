@@ -16,49 +16,48 @@ using namespace std;
 namespace fs = std::filesystem;
 
 // ============================================================================
-// Константы
+// Constants
 // ============================================================================
-const int IMAGE_SIZE = 6;                       // Размер образа 6x6
-const int INPUT_SIZE = IMAGE_SIZE * IMAGE_SIZE; // 36 входов
-const int NUM_CLASSES = 5;                      // Количество классов
-const int NUM_PATTERNS_PER_CLASS = 3;           // Тестовых образов на класс
-const int MAX_TRAINING_ITERATIONS = 10000;      // Максимум итераций обучения
-const double LEARNING_RATE = 0.1;               // Скорость обучения
-const double EPSILON = 1e-6;                    // Точность для остановки обучения
+const int IMAGE_SIZE = 6;                       // Image size 6x6
+const int INPUT_SIZE = IMAGE_SIZE * IMAGE_SIZE; // 36 inputs
+const int NUM_CLASSES = 5;                      // Number of classes
+const int NUM_PATTERNS_PER_CLASS = 3;           // Test patterns per class
+const int MAX_TRAINING_ITERATIONS = 10000;      // Max training iterations
+const double LEARNING_RATE = 0.1;               // Learning rate
+const double EPSILON = 1e-6;                    // Precision for stopping training
 
-// Пути к папкам
+// Directory paths
 const string PATTERNS_DIR = "patterns/";
 const string TESTS_DIR = "tests/";
 
 // ============================================================================
-// Типы данных
+// Data types
 // ============================================================================
-using Pattern = array<double, INPUT_SIZE>;      // Входной вектор (0 или 1)
+using Pattern = array<double, INPUT_SIZE>;      // Input vector (0 or 1)
 using RBFNeuron = struct {
-    Pattern center;                              // Центр РБФ ячейки
-    double sigma;                                // Параметр разброса
+    Pattern center;                              // RBF cell center
+    double sigma;                                // Spread parameter
 };
-using WeightMatrix = vector<vector<double>>;     // Веса выходного слоя
+using WeightMatrix = vector<vector<double>>;     // Output layer weights
 
-// Названия классов для вывода
+// Class names for output
 const string CLASS_NAMES[NUM_CLASSES] = {"N", "F", "I", "P", "D"};
-const string CLASS_NAMES_RU[NUM_CLASSES] = {"N", "F", "I", "P", "D"};
 
 // ============================================================================
-// Глобальные переменные
+// Global variables
 // ============================================================================
-Pattern patterns[NUM_CLASSES];                  // Идеальные образы для обучения
-vector<RBFNeuron> rbfNeurons;                   // РБФ ячейки (по одной на класс)
-WeightMatrix outputWeights;                     // Веса выходного слоя
-mt19937 rng;                                    // Генератор случайных чисел
+Pattern patterns[NUM_CLASSES];                  // Ideal training patterns
+vector<RBFNeuron> rbfNeurons;                   // RBF cells (one per class)
+WeightMatrix outputWeights;                     // Output layer weights
+mt19937 rng;                                    // Random number generator
 
 // ============================================================================
-// Загрузка паттерна из файла
+// Load pattern from file
 // ============================================================================
 bool loadPattern(const string& filename, Pattern& pattern) {
     ifstream file(filename);
     if (!file.is_open()) {
-        cerr << "Ошибка: не удалось открыть файл " << filename << endl;
+        cerr << "Error: cannot open file " << filename << endl;
         return false;
     }
     
@@ -66,13 +65,13 @@ bool loadPattern(const string& filename, Pattern& pattern) {
     int idx = 0;
     
     while (getline(file, line) && idx < INPUT_SIZE) {
-        // Пропускаем комментарии
+        // Skip comments
         if (line.empty() || line[0] == '#') continue;
         
         istringstream iss(line);
         int value;
         while (iss >> value && idx < INPUT_SIZE) {
-            // Преобразуем 0/1 в формат 0.0/1.0
+            // Convert 0/1 to 0.0/1.0 format
             pattern[idx++] = (value == 1) ? 1.0 : 0.0;
         }
     }
@@ -82,12 +81,12 @@ bool loadPattern(const string& filename, Pattern& pattern) {
 }
 
 // ============================================================================
-// Сохранение паттерна в файл
+// Save pattern to file
 // ============================================================================
 void savePattern(const string& filename, const Pattern& pattern, const string& header = "") {
     ofstream file(filename);
     if (!file.is_open()) {
-        cerr << "Ошибка: не удалось создать файл " << filename << endl;
+        cerr << "Error: cannot create file " << filename << endl;
         return;
     }
     
@@ -108,13 +107,13 @@ void savePattern(const string& filename, const Pattern& pattern, const string& h
 }
 
 // ============================================================================
-// Инициализация эталонных образов из файлов
+// Initialize reference patterns from files
 // ============================================================================
 bool initPatterns() {
     for (int i = 0; i < NUM_CLASSES; i++) {
         string filename = PATTERNS_DIR + CLASS_NAMES[i] + ".txt";
         if (!loadPattern(filename, patterns[i])) {
-            cerr << "Ошибка загрузки паттерна " << CLASS_NAMES[i] << endl;
+            cerr << "Error loading pattern " << CLASS_NAMES[i] << endl;
             return false;
         }
     }
@@ -122,7 +121,7 @@ bool initPatterns() {
 }
 
 // ============================================================================
-// Вычисление евклидова расстояния
+// Compute Euclidean distance
 // ============================================================================
 double euclideanDistance(const Pattern& a, const Pattern& b) {
     double sum = 0.0;
@@ -134,19 +133,19 @@ double euclideanDistance(const Pattern& a, const Pattern& b) {
 }
 
 // ============================================================================
-// Инициализация РБФ ячеек
+// Initialize RBF neurons
 // ============================================================================
 void initRBFNeurons() {
     rbfNeurons.clear();
     rbfNeurons.resize(NUM_CLASSES);
     
-    // Центры РБФ ячеек = идеальные образы классов
+    // RBF cell centers = ideal class patterns
     for (int i = 0; i < NUM_CLASSES; i++) {
         rbfNeurons[i].center = patterns[i];
     }
     
-    // Вычисление параметров разброса sigma
-    // sigma_j = половина расстояния до ближайшего центра другого класса
+    // Compute spread parameters sigma
+    // sigma_j = half distance to nearest center of another class
     for (int i = 0; i < NUM_CLASSES; i++) {
         double minDist = numeric_limits<double>::max();
         
@@ -159,7 +158,7 @@ void initRBFNeurons() {
             }
         }
         
-        // Если все центры одинаковые (не должно быть), используем значение по умолчанию
+        // If all centers are the same (shouldn't happen), use default value
         if (minDist < EPSILON) {
             rbfNeurons[i].sigma = 1.0;
         } else {
@@ -169,7 +168,7 @@ void initRBFNeurons() {
 }
 
 // ============================================================================
-// Вычисление выхода РБФ ячейки (гауссов колокол)
+// Compute RBF cell output (Gaussian bell)
 // ============================================================================
 double rbfOutput(const Pattern& input, const RBFNeuron& neuron) {
     double distSquared = 0.0;
@@ -183,7 +182,7 @@ double rbfOutput(const Pattern& input, const RBFNeuron& neuron) {
 }
 
 // ============================================================================
-// Вычисление выхода сети РБФ
+// Compute RBF network output
 // ============================================================================
 vector<double> computeRBFOutput(const Pattern& input) {
     vector<double> rbfOutputs(NUM_CLASSES);
@@ -194,7 +193,7 @@ vector<double> computeRBFOutput(const Pattern& input) {
 }
 
 // ============================================================================
-// Вычисление выхода выходного слоя
+// Compute output layer output
 // ============================================================================
 vector<double> computeOutputLayer(const vector<double>& rbfOutputs) {
     vector<double> outputs(NUM_CLASSES, 0.0);
@@ -209,10 +208,10 @@ vector<double> computeOutputLayer(const vector<double>& rbfOutputs) {
 }
 
 // ============================================================================
-// Обучение выходного слоя градиентным спуском
+// Train output layer using gradient descent
 // ============================================================================
 int trainOutputLayer() {
-    // Инициализация весов случайными значениями
+    // Initialize weights with random values
     outputWeights.assign(NUM_CLASSES, vector<double>(NUM_CLASSES, 0.0));
     uniform_real_distribution<double> dist(-0.1, 0.1);
     for (int j = 0; j < NUM_CLASSES; j++) {
@@ -228,24 +227,24 @@ int trainOutputLayer() {
         iterations++;
         double totalError = 0.0;
         
-        // Проход по всем обучающим образам
+        // Pass through all training patterns
         for (int classIdx = 0; classIdx < NUM_CLASSES; classIdx++) {
-            // Вычисляем выходы РБФ слоя
+            // Compute RBF layer outputs
             vector<double> rbfOuts = computeRBFOutput(patterns[classIdx]);
             
-            // Вычисляем выходы выходного слоя
+            // Compute output layer outputs
             vector<double> outputs = computeOutputLayer(rbfOuts);
             
-            // Ожидаемый выход: 1.0 для правильного класса, 0.0 для остальных
+            // Expected output: 1.0 for correct class, 0.0 for others
             vector<double> targets(NUM_CLASSES, 0.0);
             targets[classIdx] = 1.0;
             
-            // Коррекция весов для каждого выходного нейрона
+            // Weight correction for each output neuron
             for (int k = 0; k < NUM_CLASSES; k++) {
                 double error = targets[k] - outputs[k];
                 totalError += error * error;
                 
-                // Градиентный спуск: w_jk := w_jk + α * d_k * g_j
+                // Gradient descent: w_jk := w_jk + alpha * d_k * g_j
                 for (int j = 0; j < NUM_CLASSES; j++) {
                     outputWeights[j][k] += LEARNING_RATE * error * rbfOuts[j];
                 }
@@ -254,7 +253,7 @@ int trainOutputLayer() {
         
         totalError /= NUM_CLASSES;
         
-        // Проверка на сходимость
+        // Check convergence
         if (abs(prevError - totalError) < EPSILON) {
             break;
         }
@@ -265,7 +264,7 @@ int trainOutputLayer() {
 }
 
 // ============================================================================
-// Добавление шума к образу
+// Add noise to pattern
 // ============================================================================
 Pattern addNoise(const Pattern& original, int noisePercent) {
     Pattern noisy = original;
@@ -276,7 +275,7 @@ Pattern addNoise(const Pattern& original, int noisePercent) {
     shuffle(indices.begin(), indices.end(), rng);
     
     for (int i = 0; i < numPixelsToFlip; i++) {
-        // Инверсия пикселя: 0 -> 1, 1 -> 0
+        // Flip pixel: 0 -> 1, 1 -> 0
         noisy[indices[i]] = (noisy[indices[i]] > 0.5) ? 0.0 : 1.0;
     }
     
@@ -284,18 +283,17 @@ Pattern addNoise(const Pattern& original, int noisePercent) {
 }
 
 // ============================================================================
-// Распознавание образа
+// Recognize pattern
 // ============================================================================
 vector<double> recognize(const Pattern& input) {
     vector<double> rbfOuts = computeRBFOutput(input);
     vector<double> outputs = computeOutputLayer(rbfOuts);
     
-    // Преобразуем выходы в положительные значения (softmax-like normalization)
-    // Используем экспоненту для нормализации, чтобы получить проценты
+    // Convert outputs to positive values (softmax-like normalization)
     double sum = 0.0;
     vector<double> expOutputs(NUM_CLASSES);
     
-    // Находим максимум для численной стабильности
+    // Find max for numerical stability
     double maxOutput = *max_element(outputs.begin(), outputs.end());
     
     for (int i = 0; i < NUM_CLASSES; i++) {
@@ -303,14 +301,14 @@ vector<double> recognize(const Pattern& input) {
         sum += expOutputs[i];
     }
     
-    // Нормализация в проценты
+    // Normalize to percentages
     vector<double> percentages(NUM_CLASSES);
     if (sum > EPSILON) {
         for (int i = 0; i < NUM_CLASSES; i++) {
             percentages[i] = (expOutputs[i] / sum) * 100.0;
         }
     } else {
-        // Если сумма нулевая, равномерное распределение
+        // If sum is zero, uniform distribution
         for (int i = 0; i < NUM_CLASSES; i++) {
             percentages[i] = 100.0 / NUM_CLASSES;
         }
@@ -320,32 +318,32 @@ vector<double> recognize(const Pattern& input) {
 }
 
 // ============================================================================
-// Вывод образа в консоль
+// Print pattern to console
 // ============================================================================
 void printPattern(const Pattern& p, const string& title = "") {
     if (!title.empty()) cout << title << ":" << endl;
     
     for (int i = 0; i < IMAGE_SIZE; i++) {
-        cout << "│   ";
+        cout << "|   ";
         for (int j = 0; j < IMAGE_SIZE; j++) {
             int idx = i * IMAGE_SIZE + j;
-            cout << (p[idx] > 0.5 ? "■" : "□") << " ";
+            cout << (p[idx] > 0.5 ? "#" : ".") << " ";
         }
-        cout << "                                  │" << endl;
+        cout << "                                  |" << endl;
     }
 }
 
 // ============================================================================
-// Генерация тестовых образов
+// Generate test patterns
 // ============================================================================
 void generateTestPatterns() {
-    cout << "Генерация тестовых образов..." << endl;
+    cout << "Generating test patterns..." << endl;
     
     int noiseLevels[] = {10, 20, 30, 40, 50};
     int numNoiseLevels = sizeof(noiseLevels) / sizeof(noiseLevels[0]);
     
     for (int c = 0; c < NUM_CLASSES; c++) {
-        // Создаём подпапку для каждого класса
+        // Create subfolder for each class
         string classDir = TESTS_DIR + CLASS_NAMES[c] + "/";
         fs::create_directories(classDir);
         
@@ -357,80 +355,78 @@ void generateTestPatterns() {
             for (int t = 0; t < NUM_PATTERNS_PER_CLASS; t++) {
                 Pattern noisy = addNoise(patterns[c], noise);
                 string filename = noiseDir + "test_" + to_string(t + 1) + ".txt";
-                string header = "Класс " + CLASS_NAMES[c] + ", шум " + to_string(noise) + "%, тест " + to_string(t + 1);
+                string header = "Class " + CLASS_NAMES[c] + ", noise " + to_string(noise) + "%, test " + to_string(t + 1);
                 savePattern(filename, noisy, header);
             }
         }
     }
     
-    cout << "Тестовые образы сохранены в папку " << TESTS_DIR << endl;
+    cout << "Test patterns saved to " << TESTS_DIR << endl;
 }
 
 // ============================================================================
-// Главная функция
+// Main function
 // ============================================================================
 int main() {
-    setlocale(LC_ALL, "Russian");
-    
-    // Инициализация генератора случайных чисел
+    // Initialize random number generator
     unsigned seed = chrono::system_clock::now().time_since_epoch().count();
     rng.seed(seed);
     
     cout << "========================================================" << endl;
-    cout << "    ЛАБОРАТОРНАЯ РАБОТА №3: СЕТЬ РБФ" << endl;
-    cout << "    Вариант 2: классы N, F, I, P, D" << endl;
+    cout << "    LAB 3: RBF NETWORK" << endl;
+    cout << "    Variant 2: Classes N, F, I, P, D" << endl;
     cout << "========================================================" << endl << endl;
     
-    // Создание директорий
+    // Create directories
     fs::create_directories(PATTERNS_DIR);
     fs::create_directories(TESTS_DIR);
     
-    // Загрузка эталонных образов
-    cout << "1. Загрузка эталонных образов из " << PATTERNS_DIR << "..." << endl;
+    // Load reference patterns
+    cout << "1. Loading reference patterns from " << PATTERNS_DIR << "..." << endl;
     if (!initPatterns()) {
-        cerr << "Ошибка загрузки паттернов!" << endl;
+        cerr << "Error loading patterns!" << endl;
         return 1;
     }
     
-    // Вывод эталонных образов
-    cout << "\nИдеальные образы для обучения (6x6):" << endl;
-    cout << "-----------------------------------" << endl;
+    // Display ideal training patterns
+    cout << "\nIdeal training patterns (6x6):" << endl;
+    cout << "------------------------------" << endl;
     for (int i = 0; i < NUM_CLASSES; i++) {
-        cout << "Класс " << (i + 1) << " (" << CLASS_NAMES[i] << "):" << endl;
+        cout << "Class " << (i + 1) << " (" << CLASS_NAMES[i] << "):" << endl;
         for (int row = 0; row < IMAGE_SIZE; row++) {
             cout << "  ";
             for (int col = 0; col < IMAGE_SIZE; col++) {
                 int idx = row * IMAGE_SIZE + col;
-                cout << (patterns[i][idx] > 0.5 ? "■" : "□") << " ";
+                cout << (patterns[i][idx] > 0.5 ? "#" : ".") << " ";
             }
             cout << endl;
         }
         cout << endl;
     }
     
-    // Инициализация РБФ ячеек
-    cout << "2. Инициализация РБФ ячеек..." << endl;
+    // Initialize RBF cells
+    cout << "2. Initializing RBF cells..." << endl;
     initRBFNeurons();
-    cout << "   Количество РБФ ячеек: " << NUM_CLASSES << endl;
+    cout << "   Number of RBF cells: " << NUM_CLASSES << endl;
     for (int i = 0; i < NUM_CLASSES; i++) {
-        cout << "   Класс " << (i + 1) << " (" << CLASS_NAMES[i] << "): sigma = " 
+        cout << "   Class " << (i + 1) << " (" << CLASS_NAMES[i] << "): sigma = " 
              << fixed << setprecision(3) << rbfNeurons[i].sigma << endl;
     }
     cout << endl;
     
-    // Обучение выходного слоя
-    cout << "3. Обучение выходного слоя градиентным спуском..." << endl;
+    // Train output layer
+    cout << "3. Training output layer using gradient descent..." << endl;
     int trainingSteps = trainOutputLayer();
-    cout << "   Обучение завершено за " << trainingSteps << " шагов" << endl << endl;
+    cout << "   Training completed in " << trainingSteps << " steps" << endl << endl;
     
-    // Генерация тестовых образов
-    cout << "4. Генерация тестовых образов с разным уровнем шума..." << endl;
+    // Generate test patterns
+    cout << "4. Generating test patterns with various noise levels..." << endl;
     generateTestPatterns();
     cout << endl;
     
-    // Тестирование
-    cout << "5. Тестирование распознавания:" << endl;
-    cout << "=========================================" << endl << endl;
+    // Testing
+    cout << "5. Recognition testing:" << endl;
+    cout << "=======================" << endl << endl;
     
     int noiseLevels[] = {10, 20, 30, 40, 50};
     int numNoiseLevels = sizeof(noiseLevels) / sizeof(noiseLevels[0]);
@@ -446,17 +442,17 @@ int main() {
                     continue;
                 }
                 
-                // Распознавание
+                // Recognition
                 vector<double> percentages = recognize(testPattern);
                 
-                // Вывод результатов
-                cout << "┌─────────────────────────────────────────────────┐" << endl;
-                cout << "│ Распознаваемый образ (6×6):                     │" << endl;
-                cout << "│                                                 │" << endl;
+                // Output results
+                cout << "+--------------------------------------------------+" << endl;
+                cout << "| Recognized pattern (6x6):                        |" << endl;
+                cout << "|                                                  |" << endl;
                 printPattern(testPattern);
-                cout << "│                                                 │" << endl;
-                cout << "├─────────────────────────────────────────────────┤" << endl;
-                cout << "│ Процент подобия (выход РБФ):                    │" << endl;
+                cout << "|                                                  |" << endl;
+                cout << "+--------------------------------------------------+" << endl;
+                cout << "| Similarity percentage (RBF output):              |" << endl;
                 
                 int bestClass = 0;
                 double maxPercent = percentages[0];
@@ -468,26 +464,26 @@ int main() {
                 }
                 
                 for (int i = 0; i < NUM_CLASSES; i++) {
-                    string marker = (i == bestClass) ? "  ◄── Распознан как \"" + CLASS_NAMES[i] + "\"" : "";
-                    cout << "│   Класс " << (i + 1) << " (" << CLASS_NAMES[i] << "): " 
+                    string marker = (i == bestClass) ? "  <-- Recognized as \"" + CLASS_NAMES[i] + "\"" : "";
+                    cout << "|   Class " << (i + 1) << " (" << CLASS_NAMES[i] << "): " 
                          << setw(5) << fixed << setprecision(1) << percentages[i] << "%" << marker << endl;
                 }
                 
-                cout << "│                                                 │" << endl;
-                cout << "├─────────────────────────────────────────────────┤" << endl;
-                cout << "│ Шагов обучения: " << setw(30) << trainingSteps << " │" << endl;
-                cout << "└─────────────────────────────────────────────────┘" << endl << endl;
+                cout << "|                                                  |" << endl;
+                cout << "+--------------------------------------------------+" << endl;
+                cout << "| Training steps: " << setw(30) << trainingSteps << " |" << endl;
+                cout << "+--------------------------------------------------+" << endl << endl;
             }
         }
     }
     
-    // Выводы
-    cout << "6. Выводы:" << endl;
-    cout << "==========" << endl;
-    cout << "- Сеть РБФ успешно обучена на 5 классах образов (N, F, I, P, D)" << endl;
-    cout << "- Обучение завершено за " << trainingSteps << " шагов" << endl;
-    cout << "- Сеть способна распознавать зашумленные образы" << endl;
-    cout << "- Процент подобия показывает степень соответствия каждому классу" << endl;
+    // Conclusions
+    cout << "6. Conclusions:" << endl;
+    cout << "===============" << endl;
+    cout << "- RBF network successfully trained on 5 classes (N, F, I, P, D)" << endl;
+    cout << "- Training completed in " << trainingSteps << " steps" << endl;
+    cout << "- Network can recognize noisy patterns" << endl;
+    cout << "- Similarity percentage shows correspondence to each class" << endl;
     
     return 0;
 }
