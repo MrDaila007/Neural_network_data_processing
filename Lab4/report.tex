@@ -6,11 +6,37 @@
 \setmainfont{DejaVu Serif}
 \setsansfont{DejaVu Sans}
 \setmonofont{DejaVu Sans Mono}
+
 \usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{graphicx}
 \usepackage{geometry}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{multirow}
 
-\geometry{left=2.5cm,right=2.5cm,top=2cm,bottom=2cm}
+\geometry{margin=2.5cm}
+
+% Настройка листингов для C++
+\lstdefinestyle{cppstyle}{
+    language=C++,
+    basicstyle=\footnotesize\ttfamily,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green!60!black}\itshape,
+    stringstyle=\color{red!70!black},
+    numberstyle=\tiny\color{gray},
+    numbers=left,
+    numbersep=5pt,
+    frame=single,
+    breaklines=true,
+    breakatwhitespace=true,
+    tabsize=4,
+    showstringspaces=false,
+    captionpos=b
+}
+\lstset{style=cppstyle}
 
 \title{
     \textbf{Лабораторная работа №4}\\[0.5cm]
@@ -172,21 +198,111 @@ d_v = \min_j (\|x - w_j\| \times f_j)
 
 \begin{verbatim}
 Символ ≤ (LE):      Символ ≥ (GE):      Символ ≠ (NE):
-  □ □ □ □ □ □         □ □ □ □ □ □         ■ ■ □ □ ■ ■
-  □ □ □ □ □ □         □ □ □ □ □ □         ■ ■ □ □ ■ ■
-  □ □ ■ ■ ■ □         ■ ■ ■ ■ ■ ■         □ □ □ □ □ □
-  □ □ □ □ □ □         □ □ □ □ □ □         □ □ □ □ □ □
-  ■ ■ ■ ■ ■ ■         □ □ ■ ■ ■ □         ■ ■ □ □ ■ ■
-  □ □ □ □ □ □         □ □ □ □ □ □         ■ ■ □ □ ■ ■
+□ □ □ □ ■ ■        ■ ■ □ □ □ □        □ □ ■ ■ □ □
+□ □ □ ■ ■ □        □ ■ ■ □ □ □        □ ■ ■ ■ ■ □
+□ □ ■ ■ □ □        □ □ ■ ■ □ □        ■ ■ ■ ■ ■ ■
+□ □ ■ ■ □ □        □ □ ■ ■ □ □        ■ ■ ■ ■ ■ ■
+□ □ □ ■ ■ □        □ ■ ■ □ □ □        □ ■ ■ ■ ■ □
+■ ■ ■ ■ ■ ■        ■ ■ ■ ■ ■ ■        □ □ ■ ■ □ □
 
 Символ ≈ (AP):      Символ ≅ (CO):
-  □ □ □ □ □ □         □ □ □ □ □ □
-  □ ■ ■ ■ ■ □         □ ■ ■ ■ ■ □
-  ■ □ □ □ □ ■         ■ □ □ □ □ ■
-  □ □ □ □ □ □         □ □ ■ ■ □ □
-  ■ □ □ □ □ ■         ■ □ □ □ □ ■
-  □ ■ ■ ■ ■ □         □ ■ ■ ■ ■ □
+□ ■ □ □ ■ □        □ □ □ □ ■ ■
+■ □ ■ ■ □ ■        □ □ □ ■ ■ □
+□ □ □ □ □ □        □ □ ■ ■ □ □
+□ □ □ □ □ □        □ □ ■ ■ □ □
+□ ■ □ □ ■ □        □ □ ■ ■ □ □
+■ □ ■ ■ □ ■        ■ ■ ■ ■ ■ ■
 \end{verbatim}
+
+\subsection{Ключевые фрагменты кода}
+
+\subsubsection{Нахождение нейрона-победителя}
+
+\begin{lstlisting}[caption={Функция поиска нейрона-победителя с частотной зависимостью}]
+int findWinner(const Pattern& input) {
+    int winner = 0;
+    double min_score = INFINITY;
+    
+    for (int j = 0; j < NUM_NEURONS; j++) {
+        // Вычисление евклидового расстояния
+        double distance = 0.0;
+        for (int i = 0; i < INPUT_SIZE; i++) {
+            double diff = input[i] - weights[j][i];
+            distance += diff * diff;
+        }
+        distance = sqrt(distance);
+        
+        // Частотно-зависимый критерий
+        double score = distance * (1.0 + win_counts[j]);
+        
+        if (score < min_score) {
+            min_score = score;
+            winner = j;
+        }
+    }
+    
+    return winner;
+}
+\end{lstlisting}
+
+\subsubsection{Обновление весов}
+
+\begin{lstlisting}[caption={Функция обновления весов нейрона-победителя}]
+void updateWeights(int winner, const Pattern& input) {
+    // Обновление весов по правилу Кохонена
+    for (int i = 0; i < INPUT_SIZE; i++) {
+        weights[winner][i] += LEARNING_RATE * (input[i] - weights[winner][i]);
+    }
+    
+    // Нормировка весового вектора
+    double norm = 0.0;
+    for (int i = 0; i < INPUT_SIZE; i++) {
+        norm += weights[winner][i] * weights[winner][i];
+    }
+    norm = sqrt(norm);
+    
+    if (norm > 0) {
+        for (int i = 0; i < INPUT_SIZE; i++) {
+            weights[winner][i] /= norm;
+        }
+    }
+}
+\end{lstlisting}
+
+\subsubsection{Цикл обучения}
+
+\begin{lstlisting}[caption={Основной цикл обучения конкурентной сети}]
+void train(const vector<Pattern>& patterns) {
+    // Инициализация весов случайными значениями
+    initializeWeights();
+    
+    for (int epoch = 0; epoch < MAX_EPOCHS; epoch++) {
+        double max_distance = 0.0;
+        
+        for (const auto& pattern : patterns) {
+            // Нормировка входного вектора
+            Pattern normalized = normalize(pattern);
+            
+            // Поиск нейрона-победителя
+            int winner = findWinner(normalized);
+            win_counts[winner]++;
+            
+            // Вычисление расстояния до победителя
+            double dist = euclideanDistance(normalized, weights[winner]);
+            max_distance = max(max_distance, dist);
+            
+            // Обновление весов
+            updateWeights(winner, normalized);
+        }
+        
+        // Проверка условия сходимости
+        if (max_distance < EPSILON) {
+            cout << "Сходимость достигнута на эпохе " << epoch << endl;
+            break;
+        }
+    }
+}
+\end{lstlisting}
 
 \subsection{Параметры реализации}
 
@@ -209,7 +325,9 @@ d_v = \min_j (\|x - w_j\| \times f_j)
 
 После обучения было установлено соответствие между нейронами-победителями и классами образов:
 
-\begin{center}
+\begin{table}[H]
+\centering
+\caption{Соответствие нейронов классам}
 \begin{tabular}{|c|c|}
 \hline
 Класс & Нейрон-победитель \\
@@ -221,13 +339,15 @@ d_v = \min_j (\|x - w_j\| \times f_j)
 ≅ & \#4 \\
 \hline
 \end{tabular}
-\end{center}
+\end{table}
 
 \subsection{Статистика кластеризации}
 
 После обучения на 15 образах (по 3 образа каждого класса) была получена следующая статистика:
 
-\begin{center}
+\begin{table}[H]
+\centering
+\caption{Статистика кластеризации}
 \begin{tabular}{|c|c|c|}
 \hline
 Нейрон & Количество образов & Основной класс \\
@@ -239,14 +359,16 @@ d_v = \min_j (\|x - w_j\| \times f_j)
 \#4 & 3 & ≅ \\
 \hline
 \end{tabular}
-\end{center}
+\end{table}
 
 Каждый нейрон стал победителем для образов своего класса, что подтверждает правильную кластеризацию.
 
 \subsection{Результаты распознавания зашумленных образов}
 
-\begin{center}
-\begin{tabular}{|c|c|c|c|c|c|}
+\begin{table}[H]
+\centering
+\caption{Матрица ошибок для различных уровней шума}
+\begin{tabular}{|c|c|c|c|c|c|c|}
 \hline
 Класс & Шум & ≤ & ≥ & ≠ & ≈ & ≅ \\
 \hline
@@ -281,11 +403,13 @@ d_v = \min_j (\|x - w_j\| \times f_j)
  & 50\% & 0/10 & 1/10 & 1/10 & 2/10 & 6/10 \\
 \hline
 \end{tabular}
-\end{center}
+\end{table}
 
 \subsection{Сводная статистика по уровням шума}
 
-\begin{center}
+\begin{table}[H]
+\centering
+\caption{Точность распознавания в зависимости от уровня шума}
 \begin{tabular}{|c|c|}
 \hline
 Шум & Процент правильного распознавания \\
@@ -297,12 +421,14 @@ d_v = \min_j (\|x - w_j\| \times f_j)
 50\% & 52\% \\
 \hline
 \end{tabular}
-\end{center}
+\end{table}
 
 \section{Сравнение с другими типами нейронных сетей}
 
-\begin{center}
-\begin{tabular}{|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
+\begin{table}[H]
+\centering
+\caption{Сравнение различных типов нейронных сетей}
+\begin{tabular}{|p{3.5cm}|p{3.5cm}|p{3.5cm}|p{3.5cm}|}
 \hline
 Характеристика & Многослойный персептрон & Сеть РБФ & Конкурентная сеть \\
 \hline
@@ -319,7 +445,7 @@ d_v = \min_j (\|x - w_j\| \times f_j)
 Интерпретируемость & Средняя & Средняя & Высокая \\
 \hline
 \end{tabular}
-\end{center}
+\end{table}
 
 \textbf{Преимущества конкурентной сети:}
 \begin{itemize}

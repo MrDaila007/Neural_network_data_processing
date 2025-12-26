@@ -6,11 +6,36 @@
 \setmainfont{DejaVu Serif}
 \setsansfont{DejaVu Sans}
 \setmonofont{DejaVu Sans Mono}
+
 \usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{graphicx}
 \usepackage{geometry}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
 
-\geometry{left=2.5cm,right=2.5cm,top=2cm,bottom=2cm}
+\geometry{margin=2.5cm}
+
+% Настройка листингов для C++
+\lstdefinestyle{cppstyle}{
+    language=C++,
+    basicstyle=\footnotesize\ttfamily,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green!60!black}\itshape,
+    stringstyle=\color{red!70!black},
+    numberstyle=\tiny\color{gray},
+    numbers=left,
+    numbersep=5pt,
+    frame=single,
+    breaklines=true,
+    breakatwhitespace=true,
+    tabsize=4,
+    showstringspaces=false,
+    captionpos=b
+}
+\lstset{style=cppstyle}
 
 \title{
     \textbf{Лабораторная работа №3}\\[0.5cm]
@@ -205,6 +230,78 @@ y_k = \sum_{j=1}^{h} w_{jk} \times g_j
 ■ □ □ □ □ □        ■ ■ ■ ■ □ □
 \end{verbatim}
 
+\subsection{Ключевые фрагменты кода}
+
+\subsubsection{Вычисление выхода РБФ ячейки}
+
+\begin{lstlisting}[caption={Функция гауссовой активации}]
+double gaussian(const Pattern& input, const Pattern& center, double sigma) {
+    double distance_sq = 0.0;
+    for (int i = 0; i < INPUT_SIZE; i++) {
+        double diff = input[i] - center[i];
+        distance_sq += diff * diff;
+    }
+    return exp(-distance_sq / (sigma * sigma));
+}
+\end{lstlisting}
+
+\subsubsection{Инициализация параметров разброса}
+
+\begin{lstlisting}[caption={Вычисление параметров $\sigma$ для РБФ ячеек}]
+void initializeSigmas() {
+    for (int i = 0; i < NUM_CLASSES; i++) {
+        double min_dist = INFINITY;
+        for (int j = 0; j < NUM_CLASSES; j++) {
+            if (i != j) {
+                double dist = euclideanDistance(centers[i], centers[j]);
+                if (dist < min_dist) {
+                    min_dist = dist;
+                }
+            }
+        }
+        // sigma = половина расстояния до ближайшего центра
+        sigmas[i] = min_dist / 2.0;
+    }
+}
+\end{lstlisting}
+
+\subsubsection{Обучение выходного слоя}
+
+\begin{lstlisting}[caption={Функция обучения выходного слоя}]
+void trainOutputLayer() {
+    for (int epoch = 0; epoch < MAX_EPOCHS; epoch++) {
+        double max_error = 0.0;
+        
+        for (int c = 0; c < NUM_CLASSES; c++) {
+            // Вычисление выходов РБФ слоя
+            vector<double> rbf_outputs(NUM_CLASSES);
+            for (int j = 0; j < NUM_CLASSES; j++) {
+                rbf_outputs[j] = gaussian(patterns[c], centers[j], sigmas[j]);
+            }
+            
+            // Вычисление выхода сети и коррекция весов
+            for (int k = 0; k < NUM_CLASSES; k++) {
+                double y_k = 0.0;
+                for (int j = 0; j < NUM_CLASSES; j++) {
+                    y_k += weights[j][k] * rbf_outputs[j];
+                }
+                
+                double target = (k == c) ? 1.0 : 0.0;
+                double error = target - y_k;
+                max_error = max(max_error, abs(error));
+                
+                // Коррекция весов
+                for (int j = 0; j < NUM_CLASSES; j++) {
+                    weights[j][k] += LEARNING_RATE * error * rbf_outputs[j];
+                }
+            }
+        }
+        
+        if (max_error < EPSILON) break;
+    }
+}
+\end{lstlisting}
+
 \section{Результаты экспериментов}
 
 \subsection{Методика тестирования}
@@ -225,14 +322,12 @@ y_k = \sum_{j=1}^{h} w_{jk} \times g_j
 \begin{verbatim}
 ┌─────────────────────────────────────────────────┐
 │ Распознаваемый образ (6×6):                     │
-│                                                 │
 │   ■ □ □ □ □ ■                                   │
 │   ■ ■ □ □ □ ■                                   │
 │   ■ □ ■ □ □ ■                                   │
 │   ■ □ □ ■ □ ■                                   │
 │   ■ □ □ □ ■ ■                                   │
 │   ■ □ □ □ □ ■                                   │
-│                                                 │
 ├─────────────────────────────────────────────────┤
 │ Процент подобия (выход РБФ):                    │
 │   Класс 1 (N): 85.2%  ◄── Распознан как "N"     │
@@ -240,7 +335,6 @@ y_k = \sum_{j=1}^{h} w_{jk} \times g_j
 │   Класс 3 (I): 5.4%                             │
 │   Класс 4 (P): 4.8%                             │
 │   Класс 5 (D): 1.5%                             │
-│                                                 │
 ├─────────────────────────────────────────────────┤
 │ Шагов обучения: 87                              │
 └─────────────────────────────────────────────────┘
@@ -252,23 +346,26 @@ y_k = \sum_{j=1}^{h} w_{jk} \times g_j
 
 \section{Сравнение с многослойным персептроном}
 
-\begin{center}
-\begin{tabular}{|l|c|c|}
+\begin{table}[H]
+\centering
+\caption{Сравнение MLP и RBF сетей}
+\small
+\begin{tabular}{|p{4cm}|p{4.5cm}|p{4.5cm}|}
 \hline
 \textbf{Характеристика} & \textbf{Многослойный персептрон} & \textbf{Сеть РБФ} \\
 \hline
 Скорость обучения & Медленная & Быстрая \\
 \hline
-Количество слоев для обучения & 2 (скрытый + выходной) & 1 (только выходной) \\
+Обучаемые слои & 2 (скрытый + выходной) & 1 (только выходной) \\
 \hline
-Точность аппроксимации & Высокая & Ограниченная \\
+Точность & Высокая & Ограниченная \\
 \hline
-Универсальность & Широкий класс задач & Хорошо кластеризуемые классы \\
+Универсальность & Широкий класс задач & Кластеризуемые классы \\
 \hline
-Подбор параметров & Веса, пороги, скорость обучения & Центры, \( \sigma \), веса выходного слоя \\
+Параметры & Веса, пороги, $\alpha$ & Центры, $\sigma$, веса \\
 \hline
 \end{tabular}
-\end{center}
+\end{table}
 
 \section{Выводы}
 

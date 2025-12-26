@@ -6,11 +6,36 @@
 \setmainfont{DejaVu Serif}
 \setsansfont{DejaVu Sans}
 \setmonofont{DejaVu Sans Mono}
+
 \usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{graphicx}
 \usepackage{geometry}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
 
-\geometry{left=2.5cm,right=2.5cm,top=2cm,bottom=2cm}
+\geometry{margin=2.5cm}
+
+% Настройка листингов для C++
+\lstdefinestyle{cppstyle}{
+    language=C++,
+    basicstyle=\footnotesize\ttfamily,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green!60!black}\itshape,
+    stringstyle=\color{red!70!black},
+    numberstyle=\tiny\color{gray},
+    numbers=left,
+    numbersep=5pt,
+    frame=single,
+    breaklines=true,
+    breakatwhitespace=true,
+    tabsize=4,
+    showstringspaces=false,
+    captionpos=b
+}
+\lstset{style=cppstyle}
 
 \title{
     \textbf{Лабораторная работа №1}\\[0.5cm]
@@ -150,6 +175,59 @@ m \approx \frac{n}{2 \ln n + \ln \ln n}
 #        #          #      #
 \end{verbatim}
 
+\subsection{Ключевые фрагменты кода}
+
+\subsubsection{Обучение сети по правилу Хебба}
+
+\begin{lstlisting}[caption={Функция обучения сети Хопфилда}]
+void train() {
+    // Инициализация весов нулями
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            weights[i][j] = 0;
+        }
+    }
+    
+    // Обучение по правилу Хебба
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            if (i != j) {
+                for (int k = 0; k < NUM_PATTERNS; k++) {
+                    weights[i][j] += patterns[k][i] * patterns[k][j];
+                }
+            }
+        }
+    }
+}
+\end{lstlisting}
+
+\subsubsection{Синхронное воспроизведение}
+
+\begin{lstlisting}[caption={Функция синхронного воспроизведения}]
+Pattern recallSync(const Pattern& input, int& iterations) {
+    Pattern current = input;
+    Pattern next;
+    iterations = 0;
+    
+    for (int iter = 0; iter < MAX_ITERATIONS; iter++) {
+        iterations++;
+        
+        for (int i = 0; i < N; i++) {
+            int sum = 0;
+            for (int j = 0; j < N; j++) {
+                sum += weights[i][j] * current[j];
+            }
+            next[i] = (sum >= 0) ? 1 : -1;
+        }
+        
+        if (next == current) break;  // Стабилизация
+        current = next;
+    }
+    
+    return current;
+}
+\end{lstlisting}
+
 \section{Результаты экспериментов}
 
 \subsection{Методика тестирования}
@@ -158,7 +236,9 @@ m \approx \frac{n}{2 \ln n + \ln \ln n}
 
 \subsection{Результаты для буквы Д}
 
-\begin{center}
+\begin{table}[H]
+\centering
+\caption{Результаты распознавания буквы Д}
 \begin{tabular}{|c|c|c|c|c|}
 \hline
 Шум & Sync успех & Sync итер. & Async успех & Async итер. \\
@@ -174,11 +254,13 @@ m \approx \frac{n}{2 \ln n + \ln \ln n}
 70\%+ & 0/10 & 2.0 & 0/10 & 200 \\
 \hline
 \end{tabular}
-\end{center}
+\end{table}
 
 \subsection{Результаты для буквы Н}
 
-\begin{center}
+\begin{table}[H]
+\centering
+\caption{Результаты распознавания буквы Н}
 \begin{tabular}{|c|c|c|c|c|}
 \hline
 Шум & Sync успех & Sync итер. & Async успех & Async итер. \\
@@ -193,11 +275,13 @@ m \approx \frac{n}{2 \ln n + \ln \ln n}
 60\%+ & 0/10 & 2.2 & 0/10 & 210 \\
 \hline
 \end{tabular}
-\end{center}
+\end{table}
 
 \subsection{Результаты для буквы Х}
 
-\begin{center}
+\begin{table}[H]
+\centering
+\caption{Результаты распознавания буквы Х}
 \begin{tabular}{|c|c|c|c|c|}
 \hline
 Шум & Sync успех & Sync итер. & Async успех & Async итер. \\
@@ -212,11 +296,13 @@ m \approx \frac{n}{2 \ln n + \ln \ln n}
 60\%+ & 0/10 & 2.3 & 0/10 & 210 \\
 \hline
 \end{tabular}
-\end{center}
+\end{table}
 
 \subsection{Сводная статистика}
 
-\begin{center}
+\begin{table}[H]
+\centering
+\caption{Сводная статистика по уровням шума}
 \begin{tabular}{|c|c|c|}
 \hline
 Шум & Синхронный & Асинхронный \\
@@ -232,7 +318,7 @@ m \approx \frac{n}{2 \ln n + \ln \ln n}
 70\%+ & 0\% & 0\% \\
 \hline
 \end{tabular}
-\end{center}
+\end{table}
 
 \section{Выводы}
 

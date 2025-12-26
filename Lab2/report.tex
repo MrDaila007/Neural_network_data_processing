@@ -6,11 +6,36 @@
 \setmainfont{DejaVu Serif}
 \setsansfont{DejaVu Sans}
 \setmonofont{DejaVu Sans Mono}
+
 \usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{graphicx}
 \usepackage{geometry}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
 
-\geometry{left=2.5cm,right=2.5cm,top=2cm,bottom=2cm}
+\geometry{margin=2.5cm}
+
+% Настройка листингов для C++
+\lstdefinestyle{cppstyle}{
+    language=C++,
+    basicstyle=\footnotesize\ttfamily,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green!60!black}\itshape,
+    stringstyle=\color{red!70!black},
+    numberstyle=\tiny\color{gray},
+    numbers=left,
+    numbersep=5pt,
+    frame=single,
+    breaklines=true,
+    breakatwhitespace=true,
+    tabsize=4,
+    showstringspaces=false,
+    captionpos=b
+}
+\lstset{style=cppstyle}
 
 \title{
     \textbf{Лабораторная работа №2}\\[0.5cm]
@@ -212,6 +237,77 @@ Q_j    &:= Q_j  + \beta \cdot g_j \cdot (1 - g_j) \cdot e_j
 ■ □ □ □ □ □          ■ ■ ■ ■ □ □
 \end{verbatim}
 
+\subsection{Ключевые фрагменты кода}
+
+\subsubsection{Прямой проход через сеть}
+
+\begin{lstlisting}[caption={Функция прямого прохода (forward pass)}]
+pair<HiddenVector, OutputVector> forward(const InputVector& input) {
+    // Вычисление выхода скрытого слоя
+    HiddenVector hidden(HIDDEN_SIZE);
+    for (int j = 0; j < HIDDEN_SIZE; j++) {
+        double sum = thresholds_hidden[j];
+        for (int i = 0; i < INPUT_SIZE; i++) {
+            sum += weights_hidden[i][j] * input[i];
+        }
+        hidden[j] = sigmoid(sum);
+    }
+    
+    // Вычисление выхода выходного слоя
+    OutputVector output(NUM_CLASSES);
+    for (int k = 0; k < NUM_CLASSES; k++) {
+        double sum = thresholds_output[k];
+        for (int j = 0; j < HIDDEN_SIZE; j++) {
+            sum += weights_output[j][k] * hidden[j];
+        }
+        output[k] = sigmoid(sum);
+    }
+    
+    return {hidden, output};
+}
+\end{lstlisting}
+
+\subsubsection{Обучение на одном примере}
+
+\begin{lstlisting}[caption={Функция обучения с обратным распространением ошибки}]
+double trainExample(const InputVector& input, const OutputVector& target) {
+    auto [hidden, output] = forward(input);
+    
+    // Вычисление ошибок выходного слоя
+    vector<double> delta_output(NUM_CLASSES);
+    for (int k = 0; k < NUM_CLASSES; k++) {
+        double error = target[k] - output[k];
+        delta_output[k] = error * sigmoidDerivative(output[k]);
+    }
+    
+    // Вычисление ошибок скрытого слоя
+    vector<double> delta_hidden(HIDDEN_SIZE);
+    for (int j = 0; j < HIDDEN_SIZE; j++) {
+        double sum = 0.0;
+        for (int k = 0; k < NUM_CLASSES; k++) {
+            sum += delta_output[k] * weights_output[j][k];
+        }
+        delta_hidden[j] = sum * sigmoidDerivative(hidden[j]);
+    }
+    
+    // Коррекция весов выходного слоя
+    for (int j = 0; j < HIDDEN_SIZE; j++) {
+        for (int k = 0; k < NUM_CLASSES; k++) {
+            weights_output[j][k] += LEARNING_RATE_ALPHA * delta_output[k] * hidden[j];
+        }
+    }
+    
+    // Коррекция весов скрытого слоя
+    for (int i = 0; i < INPUT_SIZE; i++) {
+        for (int j = 0; j < HIDDEN_SIZE; j++) {
+            weights_hidden[i][j] += LEARNING_RATE_BETA * delta_hidden[j] * input[i];
+        }
+    }
+    
+    return computeMSE(output, target);
+}
+\end{lstlisting}
+
 \section{Результаты экспериментов}
 
 \subsection{Методика тестирования}
@@ -232,14 +328,11 @@ Q_j    &:= Q_j  + \beta \cdot g_j \cdot (1 - g_j) \cdot e_j
 \begin{verbatim}
 ┌─────────────────────────────────┐
 │ Распознаваемый образ (6×6):     │
-│                                 │
-│   ■ □ □ □ □ ■                  │
 │   ■ □ □ □ □ ■                  │
 │   ■ ■ □ □ □ ■                  │
 │   ■ □ ■ □ □ ■                  │
 │   ■ □ □ ■ □ ■                  │
 │   ■ □ □ □ ■ ■                  │
-│                                 │
 ├─────────────────────────────────┤
 │ Процент подобия:                │
 │   Класс 1 (N): 92.4%  ◄── Распознан
@@ -247,7 +340,6 @@ Q_j    &:= Q_j  + \beta \cdot g_j \cdot (1 - g_j) \cdot e_j
 │   Класс 3 (I): 5.2%             │
 │   Класс 4 (P): 8.7%             │
 │   Класс 5 (D): 12.3%            │
-│                                 │
 ├─────────────────────────────────┤
 │ Шагов обучения: 1542            │
 └─────────────────────────────────┘
@@ -267,7 +359,9 @@ Q_j    &:= Q_j  + \beta \cdot g_j \cdot (1 - g_j) \cdot e_j
 
 \section{Сравнение с нейронной сетью Хопфилда}
 
-\begin{center}
+\begin{table}[H]
+\centering
+\caption{Сравнение MLP и сети Хопфилда}
 \begin{tabular}{|l|l|l|}
 \hline
 \textbf{Характеристика} & \textbf{Сеть Хопфилда} & \textbf{Многослойный персептрон} \\
@@ -285,7 +379,7 @@ Q_j    &:= Q_j  + \beta \cdot g_j \cdot (1 - g_j) \cdot e_j
 Применение & Ассоциативная память & Классификация, распознавание образов \\
 \hline
 \end{tabular}
-\end{center}
+\end{table}
 
 \subsection{Преимущества многослойного персептрона}
 
